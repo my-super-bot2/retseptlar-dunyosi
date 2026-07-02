@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retseptlar Dunyosi — Dunyo oshxonasi bir qadamda</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<script>
+  // Oddiy tekshiruv: Agar foydalanuvchi kirmagan bo'lsa (masalan, localStorage'da 'user' yo'q bo'lsa)
+  if (!localStorage.getItem('user_logged_in')) {
+    window.location.href = 'login.html'; // Uni login sahifasiga yuboradi
+  }
+</script>
+<!-- LOADER -->
+<div class="loader-overlay" id="loaderOverlay">
+  <div class="loader-spinner"></div>
+  <div class="loader-text" id="loaderText">Yuklanmoqda...</div>
+</div>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="logo">
+    <span class="logo-mark">Retseptlar <span class="accent">Dunyosi</span></span>
+  </div>
+  <div class="lang-switch">
+    <button class="lang-btn active" data-lang="uz">UZ</button>
+    <button class="lang-btn" data-lang="ru">RU</button>
+    <button class="lang-btn" data-lang="en">EN</button>
+  </div>
+</nav>
+
+<!-- MAIN VIEW (Hero + Listing) -->
+<main id="mainView">
+
+  <!-- HERO -->
+  <section class="hero" id="heroSection">
+    <span class="hero-spice" style="top:14%; left:8%; animation-delay:0s;">🌶️</span>
+    <span class="hero-spice" style="top:22%; right:10%; animation-delay:3s;">🍋</span>
+    <span class="hero-spice" style="bottom:30%; left:14%; animation-delay:6s;">🌿</span>
+    <span class="hero-spice" style="bottom:20%; right:16%; animation-delay:9s;">🧄</span>
+    <span class="hero-spice" style="top:45%; left:50%; animation-delay:4.5s;">⭐</span>
+
+    <div class="container hero-content">
+      <div class="hero-eyebrow" id="heroEyebrow">★ 9 mamlakat • Yuzlab retseptlar</div>
+      <h1 class="hero-title" id="heroTitle">Dunyo oshxonasi <em>bir qadamda</em></h1>
+      <p class="hero-subtitle" id="heroSubtitle">9 mamlakat, yuzlab ta'mlar — qaysi birini bugun pishirasiz?</p>
+
+      <div class="search-wrap">
+        <div class="search-box">
+          <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" class="search-input" id="searchInput" placeholder="Taom nomini kiriting... (masalan: osh, pitsa, sushi)" autocomplete="off">
+          <div class="mini-spinner" id="miniSpinner"></div>
+          <button class="search-clear" id="searchClear" aria-label="Tozalash">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+          <button class="search-go" id="searchGo" aria-label="Qidirish">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </button>
+        </div>
+        <div class="search-dropdown" id="searchDropdown"></div>
+      </div>
+
+      <div class="picks-section">
+        <div class="picks-label" id="picksLabel">Kun taomlari</div>
+        <div class="picks-grid" id="picksGrid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI OSHPAZ -->
+  <section class="section ai-section" id="aiSection">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-eyebrow" id="aiEyebrow">AI Yordamchi</div>
+        <h2 class="section-title" id="aiTitle">AI Oshpazdan so'rang</h2>
+        <p class="ai-subtitle" id="aiSubtitle">Istalgan taom haqida so'rang — dunyodagi har qanday retseptni bilaman</p>
+      </div>
+
+      <div class="ai-box">
+        <textarea class="ai-input" id="aiInput" placeholder="Masalan: Manti qanday tayyorlanadi? yoki Bolgariya milliy taomlari qanaqa?"></textarea>
+        <div class="ai-controls">
+          <button class="ai-submit-btn" id="aiSubmitBtn">
+            <span id="aiSubmitText">So'rash</span>
+          </button>
+          <div class="mini-spinner" id="aiSpinner"></div>
+        </div>
+        <div class="ai-response" id="aiResponse"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ALL RECIPES GRID -->
+  <section class="section" id="allRecipesSection">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-eyebrow" id="allEyebrow">Katalog</div>
+        <h2 class="section-title" id="allRecipesTitle">Barcha retseptlar</h2>
+      </div>
+      <div class="recipes-grid" id="recipesGrid"></div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-logo">Retseptlar Dunyosi</div>
+    <div id="footerText">Dunyo taomlarini sevuvchilar uchun ishtiyoq bilan yaratildi.</div>
+  </footer>
+
+</main>
+
+<!-- DETAIL VIEW -->
+<div class="detail-view" id="detailView">
+  <div class="container">
+    <a class="detail-back" id="backBtn" href="javascript:void(0)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      <span id="backBtnText">Orqaga</span>
+    </a>
+
+    <div class="detail-hero">
+      <div class="detail-img-wrap">
+        <img id="detailImg" src="" alt="">
+        <div class="detail-flag-badge">
+          <span class="flag-emoji" id="detailFlagEmoji"></span>
+          <span id="detailCountryName"></span>
+        </div>
+      </div>
+      <div class="detail-info">
+        <div class="detail-info-eyebrow" id="detailEyebrow">Retsept</div>
+        <h1 class="detail-title" id="detailTitle"></h1>
+        <p class="detail-tagline" id="detailTagline"></p>
+
+        <div class="detail-stats">
+          <div class="detail-stat">
+            <span class="detail-stat-value" id="detailTime"></span>
+            <span class="detail-stat-label" id="detailTimeLabel">Daqiqa</span>
+          </div>
+          <div class="detail-stat">
+            <span class="detail-stat-value" id="detailServings"></span>
+            <span class="detail-stat-label" id="detailServingsLabel">Porsiya</span>
+          </div>
+          <div class="detail-stat">
+            <span class="detail-stat-value" id="detailDifficulty"></span>
+            <span class="detail-stat-label" id="detailDifficultyLabel">Murakkablik</span>
+          </div>
+        </div>
+
+        <div class="rating-block">
+          <span class="rating-block-label" id="rateThisLabel">Ushbu taomni baholang</span>
+          <div class="stars-row" id="starsRow"></div>
+          <div class="vote-feedback" id="voteFeedback">Ovoz berildi! Rahmat 🎉</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-content">
+      <div class="ingredients-col">
+        <h3 class="content-block-title" id="ingredientsTitle">Kerakli masalliqlar</h3>
+        <ul class="ingredients-list" id="ingredientsList"></ul>
+      </div>
+      <div class="steps-col">
+        <h3 class="content-block-title" id="stepsTitle">Tayyorlash bosqichlari</h3>
+        <ol class="steps-list" id="stepsList"></ol>
+      </div>
+    </div>
+
+    <div class="reviews-section">
+      <h3 class="content-block-title" id="reviewsTitle">Fikrlar</h3>
+      <div class="reviews-grid">
+        <div>
+          <div id="reviewsList"></div>
+        </div>
+        <div class="review-form">
+          <strong id="addReviewTitle" style="font-family:var(--font-display); font-size:1.05rem;">Fikr qoldiring</strong>
+          <input type="text" id="reviewName" placeholder="Ismingiz">
+          <textarea id="reviewText" placeholder="Fikringiz..."></textarea>
+          <div class="review-form-stars" id="reviewFormStars"></div>
+          <button class="review-submit-btn" id="reviewSubmitBtn">Yuborish</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="data.js"></script>
+<script src="api.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

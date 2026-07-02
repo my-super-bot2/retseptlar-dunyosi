@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retsept qo'shish — Retseptlar Dunyosi</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="navbar-logo">Retseptlar <span>Dunyosi</span></a>
+  <div class="navbar-actions">
+    <a href="index.html"><button class="nav-btn nav-btn-ghost">← Orqaga</button></a>
+  </div>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<div class="page">
+  <div class="container" style="max-width:680px; padding-top:48px; padding-bottom:60px;">
+
+    <h1 style="font-family:var(--font-display); font-size:2rem; margin-bottom:8px;">Retsept qo'shish</h1>
+    <p style="color:rgba(42,24,16,0.6); margin-bottom:36px;">O'zingizning sevimli taomingizni dunyo bilan ulashing</p>
+
+    <form id="recipeForm" onsubmit="addRecipe(event)">
+
+      <!-- Rasm yuklash -->
+      <div class="form-group">
+        <label class="form-label">Taom rasmi</label>
+        <div id="imageUploadArea" style="
+          border: 2px dashed rgba(42,24,16,0.2);
+          border-radius: var(--radius);
+          padding: 32px;
+          text-align: center;
+          cursor: pointer;
+          background: var(--paper);
+          transition: border-color 0.2s;
+        " onclick="document.getElementById('imageInput').click()">
+          <div id="imagePreview" style="display:none;">
+            <img id="previewImg" style="max-height:200px; border-radius:6px; margin:0 auto 12px;">
+          </div>
+          <div id="uploadPlaceholder">
+            <div style="font-size:2rem; margin-bottom:8px;">📸</div>
+            <div style="font-weight:600; margin-bottom:4px;">Rasm yuklash</div>
+            <div style="font-size:0.82rem; color:rgba(42,24,16,0.5);">JPG, PNG — max 5MB</div>
+          </div>
+          <input type="file" id="imageInput" accept="image/*" style="display:none;" onchange="previewImage(this)">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Taom nomi *</label>
+        <input type="text" class="form-input" id="title" placeholder="Masalan: O'zbek palov" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Mamlakat</label>
+        <select class="form-select" id="country">
+          <option value="uz">🇺🇿 O'zbekiston</option>
+          <option value="it">🇮🇹 Italiya</option>
+          <option value="jp">🇯🇵 Yaponiya</option>
+          <option value="mx">🇲🇽 Meksika</option>
+          <option value="fr">🇫🇷 Frantsiya</option>
+          <option value="th">🇹🇭 Tailand</option>
+          <option value="vn">🇻🇳 Vetnam</option>
+          <option value="ua">🇺🇦 Ukraina</option>
+          <option value="in">🇮🇳 Hindiston</option>
+          <option value="cn">🇨🇳 Xitoy</option>
+          <option value="kr">🇰🇷 Koreya</option>
+          <option value="tr">🇹🇷 Turkiya</option>
+          <option value="es">🇪🇸 Ispaniya</option>
+          <option value="de">🇩🇪 Germaniya</option>
+          <option value="us">🇺🇸 Amerika</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Masalliqlar *</label>
+        <textarea class="form-textarea" id="ingredients" placeholder="Har bir masalliqni yangi qatorga yozing:&#10;1 kg mol go'shti&#10;2 ta piyoz&#10;..." required style="min-height:140px;"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Tayyorlash bosqichlari *</label>
+        <textarea class="form-textarea" id="steps" placeholder="Har bir bosqichni yangi qatorga yozing:&#10;Go'shtni mayda to'g'rang&#10;Piyozni qovuring&#10;..." required style="min-height:180px;"></textarea>
+      </div>
+
+      <div style="display:flex; gap:12px;">
+        <button type="submit" class="btn-primary" id="submitBtn">✓ Retseptni saqlash</button>
+        <a href="index.html"><button type="button" class="btn-secondary">Bekor qilish</button></a>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://djpdfvngatsbfrenfzah.supabase.co";
+const SUPABASE_KEY = "sb_publishable_8fhNqJTTa7mCre0IBCuY8Q_2_K4rCE1";
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let selectedFile = null;
+
+// Kirish tekshiruvi
+async function checkAuth() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) window.location.href = "login.html";
+}
+checkAuth();
+
+function previewImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  selectedFile = file;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById("previewImg").src = e.target.result;
+    document.getElementById("imagePreview").style.display = "block";
+    document.getElementById("uploadPlaceholder").style.display = "none";
+  };
+  reader.readAsDataURL(file);
+}
+
+async function addRecipe(e) {
+  e.preventDefault();
+  const btn = document.getElementById("submitBtn");
+  btn.disabled = true;
+  btn.textContent = "Saqlanmoqda...";
+
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) { window.location.href = "login.html"; return; }
+
+  let imageUrl = null;
+
+  // Rasm yuklash
+  if (selectedFile) {
+    const fileExt = selectedFile.name.split(".").pop();
+    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+    const { data, error } = await sb.storage.from("recipe-images").upload(fileName, selectedFile);
+    if (!error) {
+      const { data: urlData } = sb.storage.from("recipe-images").getPublicUrl(fileName);
+      imageUrl = urlData.publicUrl;
+    }
+  }
+
+  const recipe = {
+    user_id: user.id,
+    title: document.getElementById("title").value,
+    country: document.getElementById("country").value,
+    ingredients: document.getElementById("ingredients").value,
+    steps: document.getElementById("steps").value,
+    image_url: imageUrl
+  };
+
+  const { error } = await sb.from("recipes").insert(recipe);
+
+  if (error) {
+    showToast("Xato yuz berdi: " + error.message);
+    btn.disabled = false;
+    btn.textContent = "✓ Retseptni saqlash";
+  } else {
+    showToast("Retsept muvaffaqiyatli qo'shildi! 🎉");
+    setTimeout(() => window.location.href = "index.html", 1500);
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3000);
+}
+</script>
+</body>
+</html>
