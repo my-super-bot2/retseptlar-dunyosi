@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profil — Retseptlar Dunyosi</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="navbar-logo">Retseptlar <span>Dunyosi</span></a>
+  <div class="navbar-actions">
+    <a href="add-recipe.html"><button class="nav-btn nav-btn-solid">+ Retsept</button></a>
+    <a href="index.html"><button class="nav-btn nav-btn-ghost">← Bosh sahifa</button></a>
+  </div>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<div class="page">
+  <div class="container" style="padding-top:40px; padding-bottom:60px;">
+
+    <div id="profileLoading" style="text-align:center; padding:60px;">
+      <div class="spinner"></div>
+    </div>
+
+    <div id="profileContent" style="display:none;">
+
+      <div class="profile-header">
+        <div class="profile-avatar-wrap">
+          <img id="profileAvatar" src="" alt="">
+        </div>
+        <div class="profile-info" style="flex:1;">
+          <h2 id="profileFullname"></h2>
+          <div class="username" id="profileUsername"></div>
+          <div class="profile-stats">
+            <div class="profile-stat">
+              <div class="profile-stat-value" id="recipeCount">0</div>
+              <div class="profile-stat-label">Retsept</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <button class="btn-secondary" onclick="document.getElementById('avatarInput').click()">📷 Rasm o'zgartirish</button>
+          <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="uploadAvatar(this)">
+        </div>
+      </div>
+
+      <div style="background:var(--paper); border-radius:var(--radius); padding:24px; margin-bottom:32px;">
+        <h3 style="font-family:var(--font-display); margin-bottom:18px;">Ma'lumotlarni tahrirlash</h3>
+        <form id="editProfileForm" onsubmit="updateProfile(event)">
+          <div class="form-group">
+            <label class="form-label">Foydalanuvchi nomi</label>
+            <input type="text" class="form-input" id="editUsername" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">To'liq ism</label>
+            <input type="text" class="form-input" id="editFullname" required>
+          </div>
+          <button type="submit" class="btn-primary" id="saveProfileBtn">✓ Saqlash</button>
+        </form>
+      </div>
+
+      <h3 style="font-family:var(--font-display); font-size:1.3rem; margin-bottom:18px;">Mening retseptlarim</h3>
+      <div id="myRecipesGrid" class="recipes-grid"></div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://djpdfvngatsbfrenfzah.supabase.co";
+const SUPABASE_KEY = "sb_publishable_8fhNqJTTa7mCre0IBCuY8Q_2_K4rCE1";
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+const COUNTRY_FLAGS = {uz:"🇺🇿",it:"🇮🇹",jp:"🇯🇵",mx:"🇲🇽",fr:"🇫🇷",th:"🇹🇭",vn:"🇻🇳",ua:"🇺🇦",in:"🇮🇳",cn:"🇨🇳",kr:"🇰🇷",tr:"🇹🇷",es:"🇪🇸",de:"🇩🇪",us:"🇺🇸"};
+
+async function init() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) { window.location.href = "login.html"; return; }
+  currentUser = user;
+
+  const { data: profile } = await sb.from("profiles").select("*").eq("id", user.id).single();
+
+  const avatarUrl = profile?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${profile?.username || "U"}`;
+  document.getElementById("profileAvatar").src = avatarUrl;
+  document.getElementById("profileFullname").textContent = profile?.full_name || "Foydalanuvchi";
+  document.getElementById("profileUsername").textContent = "@" + (profile?.username || "user");
+  document.getElementById("editUsername").value = profile?.username || "";
+  document.getElementById("editFullname").value = profile?.full_name || "";
+
+  const { count } = await sb.from("recipes").select("*", { count: "exact", head: true }).eq("user_id", user.id);
+  document.getElementById("recipeCount").textContent = count || 0;
+
+  await loadMyRecipes();
+
+  document.getElementById("profileLoading").style.display = "none";
+  document.getElementById("profileContent").style.display = "block";
+}
+
+async function loadMyRecipes() {
+  const grid = document.getElementById("myRecipesGrid");
+  const { data: recipes, error } = await sb.from("recipes").select("*").eq("user_id", currentUser.id).order("created_at", { ascending: false });
+
+  if (error || !recipes || recipes.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1;">
+        <h3>Hali retsept qo'shmagansiz</h3>
+        <a href="add-recipe.html" style="display:inline-block; margin-top:16px;">
+          <button class="btn-primary">+ Retsept qo'shish</button>
+        </a>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = recipes.map(r => {
+    const imageUrl = r.image_url || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80";
+    const flag = COUNTRY_FLAGS[r.country] || "🌍";
+    const avgRating = r.rating_count > 0 ? (r.rating_sum / r.rating_count).toFixed(1) : "—";
+    return `
+      <div class="recipe-card" style="position:relative;">
+        <button onclick="event.stopPropagation(); deleteRecipe('${r.id}')" title="O'chirish" style="position:absolute; top:10px; left:10px; z-index:5; width:30px; height:30px; border-radius:50%; background:rgba(28,18,11,0.65); color:white; border:none; cursor:pointer; font-size:0.9rem; display:flex; align-items:center; justify-content:center;">🗑</button>
+        <div onclick="location.href='index.html?recipe=${r.id}'" style="cursor:pointer;">
+          <div class="recipe-card-img">
+            <img src="${imageUrl}" alt="${r.title}" loading="lazy">
+            <div class="recipe-card-flag">${flag} ${r.country?.toUpperCase() || ""}</div>
+          </div>
+          <div class="recipe-card-body">
+            <div class="recipe-card-title">${r.title}</div>
+            <div class="recipe-card-footer">
+              <span>${new Date(r.created_at).toLocaleDateString("uz")}</span>
+              <span class="recipe-stars">★ ${avgRating}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+async function deleteRecipe(recipeId) {
+  if (!confirm("Bu retseptni o'chirishni xohlaysizmi? Bu amalni qaytarib bo'lmaydi.")) return;
+
+  const { error } = await sb.from("recipes").delete().eq("id", recipeId).eq("user_id", currentUser.id);
+
+  if (error) {
+    showToast("Xato: " + error.message);
+  } else {
+    showToast("Retsept o'chirildi");
+    await loadMyRecipes();
+    const { count } = await sb.from("recipes").select("*", { count: "exact", head: true }).eq("user_id", currentUser.id);
+    document.getElementById("recipeCount").textContent = count || 0;
+  }
+}
+
+async function updateProfile(e) {
+  e.preventDefault();
+  const btn = document.getElementById("saveProfileBtn");
+  btn.disabled = true;
+  btn.textContent = "Saqlanmoqda...";
+
+  const { error } = await sb.from("profiles").update({
+    username: document.getElementById("editUsername").value,
+    full_name: document.getElementById("editFullname").value
+  }).eq("id", currentUser.id);
+
+  if (error) {
+    showToast("Xato: " + error.message);
+  } else {
+    showToast("Profil yangilandi! 🎉");
+    document.getElementById("profileFullname").textContent = document.getElementById("editFullname").value;
+    document.getElementById("profileUsername").textContent = "@" + document.getElementById("editUsername").value;
+  }
+  btn.disabled = false;
+  btn.textContent = "✓ Saqlash";
+}
+
+async function uploadAvatar(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const fileExt = file.name.split(".").pop();
+  const fileName = `${currentUser.id}/avatar-${Date.now()}.${fileExt}`;
+
+  const { error: uploadError } = await sb.storage.from("avatars").upload(fileName, file, { upsert: true });
+  if (uploadError) {
+    showToast("Rasm yuklashda xato: " + uploadError.message);
+    return;
+  }
+
+  const { data: urlData } = sb.storage.from("avatars").getPublicUrl(fileName);
+  const avatarUrl = urlData.publicUrl;
+
+  const { error: updateError } = await sb.from("profiles").update({ avatar_url: avatarUrl }).eq("id", currentUser.id);
+  if (updateError) {
+    showToast("Xato: " + updateError.message);
+    return;
+  }
+
+  document.getElementById("profileAvatar").src = avatarUrl;
+  showToast("Rasm yangilandi! 🎉");
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3000);
+}
+
+if (localStorage.getItem("theme") === "dark") document.body.classList.add("dark");
+
+init();
+</script>
+</body>
+</html>

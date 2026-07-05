@@ -7,12 +7,7 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<script>
-  // Oddiy tekshiruv: Agar foydalanuvchi kirmagan bo'lsa (masalan, localStorage'da 'user' yo'q bo'lsa)
-  if (!localStorage.getItem('user_logged_in')) {
-    window.location.href = 'login.html'; // Uni login sahifasiga yuboradi
-  }
-</script>
+
 <!-- LOADER -->
 <div class="loader-overlay" id="loaderOverlay">
   <div class="loader-spinner"></div>
@@ -24,10 +19,13 @@
   <div class="logo">
     <span class="logo-mark">Retseptlar <span class="accent">Dunyosi</span></span>
   </div>
-  <div class="lang-switch">
-    <button class="lang-btn active" data-lang="uz">UZ</button>
-    <button class="lang-btn" data-lang="ru">RU</button>
-    <button class="lang-btn" data-lang="en">EN</button>
+  <div class="navbar-right" style="display:flex; align-items:center; gap:14px;">
+    <div class="lang-switch">
+      <button class="lang-btn active" data-lang="uz">UZ</button>
+      <button class="lang-btn" data-lang="ru">RU</button>
+      <button class="lang-btn" data-lang="en">EN</button>
+    </div>
+    <div id="authArea" style="display:flex; align-items:center; gap:10px;"></div>
   </div>
 </nav>
 
@@ -47,6 +45,12 @@
       <h1 class="hero-title" id="heroTitle">Dunyo oshxonasi <em>bir qadamda</em></h1>
       <p class="hero-subtitle" id="heroSubtitle">9 mamlakat, yuzlab ta'mlar — qaysi birini bugun pishirasiz?</p>
 
+      <div style="margin-bottom:24px;">
+        <a href="add-recipe.html" id="addRecipeBtn" style="display:none;">
+          <button class="lang-btn" style="background:var(--tomato); color:white; padding:10px 22px; border-radius:8px; font-weight:700;">+ Retsept qo'shish</button>
+        </a>
+      </div>
+
       <div class="search-wrap">
         <div class="search-box">
           <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -65,28 +69,6 @@
       <div class="picks-section">
         <div class="picks-label" id="picksLabel">Kun taomlari</div>
         <div class="picks-grid" id="picksGrid"></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- AI OSHPAZ -->
-  <section class="section ai-section" id="aiSection">
-    <div class="container">
-      <div class="section-head">
-        <div class="section-eyebrow" id="aiEyebrow">AI Yordamchi</div>
-        <h2 class="section-title" id="aiTitle">AI Oshpazdan so'rang</h2>
-        <p class="ai-subtitle" id="aiSubtitle">Istalgan taom haqida so'rang — dunyodagi har qanday retseptni bilaman</p>
-      </div>
-
-      <div class="ai-box">
-        <textarea class="ai-input" id="aiInput" placeholder="Masalan: Manti qanday tayyorlanadi? yoki Bolgariya milliy taomlari qanaqa?"></textarea>
-        <div class="ai-controls">
-          <button class="ai-submit-btn" id="aiSubmitBtn">
-            <span id="aiSubmitText">So'rash</span>
-          </button>
-          <div class="mini-spinner" id="aiSpinner"></div>
-        </div>
-        <div class="ai-response" id="aiResponse"></div>
       </div>
     </div>
   </section>
@@ -146,7 +128,7 @@
           </div>
         </div>
 
-        <div class="rating-block">
+        <div class="rating-block" id="ratingBlock">
           <span class="rating-block-label" id="rateThisLabel">Ushbu taomni baholang</span>
           <div class="stars-row" id="starsRow"></div>
           <div class="vote-feedback" id="voteFeedback">Ovoz berildi! Rahmat 🎉</div>
@@ -171,9 +153,8 @@
         <div>
           <div id="reviewsList"></div>
         </div>
-        <div class="review-form">
+        <div class="review-form" id="reviewFormWrap">
           <strong id="addReviewTitle" style="font-family:var(--font-display); font-size:1.05rem;">Fikr qoldiring</strong>
-          <input type="text" id="reviewName" placeholder="Ismingiz">
           <textarea id="reviewText" placeholder="Fikringiz..."></textarea>
           <div class="review-form-stars" id="reviewFormStars"></div>
           <button class="review-submit-btn" id="reviewSubmitBtn">Yuborish</button>
@@ -186,6 +167,7 @@
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="data.js"></script>
 <script src="api.js"></script>
 <script src="app.js"></script>

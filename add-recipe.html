@@ -4,94 +4,235 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Retsept qo'shish — Retseptlar Dunyosi</title>
-<link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,500&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #2A1810; --char: #1C120B; --cream: #FBF3E7; --paper: #F4E9D8;
+    --saffron: #E8A33D; --saffron-deep: #C97F1F; --tomato: #C4432F; --tomato-deep: #9E331F;
+    --basil: #5C7A4F;
+    --font-display: 'Fraunces', serif; --font-body: 'Outfit', sans-serif;
+    --radius: 12px;
+    --shadow: 0 2px 12px rgba(28,18,11,0.10);
+    --shadow-deep: 0 16px 48px rgba(28,18,11,0.22);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: var(--font-body);
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 10% 0%, rgba(232,163,61,0.12), transparent 40%),
+      radial-gradient(circle at 90% 100%, rgba(196,67,47,0.10), transparent 45%);
+  }
+  a { text-decoration: none; color: inherit; }
+  button { font-family: var(--font-body); cursor: pointer; }
+  input, textarea { font-family: var(--font-body); }
+
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(251,243,231,0.92);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(42,24,16,0.08);
+    padding: 16px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .topbar-logo { font-family: var(--font-display); font-weight: 700; font-size: 1.15rem; }
+  .topbar-logo span { color: var(--saffron); }
+  .back-link {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.85rem; font-weight: 600; color: var(--ink); opacity: 0.7;
+  }
+  .back-link:hover { opacity: 1; }
+
+  .wrap { max-width: 720px; margin: 0 auto; padding: 48px 24px 100px; }
+
+  .page-eyebrow {
+    color: var(--tomato); font-weight: 700; font-size: 0.78rem;
+    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px;
+  }
+  .page-title {
+    font-family: var(--font-display); font-size: clamp(1.8rem, 4vw, 2.6rem);
+    font-weight: 700; margin-bottom: 10px; line-height: 1.1;
+  }
+  .page-subtitle { color: rgba(42,24,16,0.6); font-size: 0.98rem; margin-bottom: 40px; }
+
+  .step-card {
+    background: var(--paper);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 22px;
+    border: 1px solid rgba(42,24,16,0.06);
+    box-shadow: var(--shadow);
+  }
+  .step-label {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 700; font-size: 0.95rem; margin-bottom: 18px;
+  }
+  .step-num {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--tomato); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.78rem; font-weight: 700; flex-shrink: 0;
+  }
+
+  .image-drop {
+    border: 2px dashed rgba(42,24,16,0.22);
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    background: var(--cream);
+    position: relative;
+  }
+  .image-drop:hover { border-color: var(--saffron); background: rgba(232,163,61,0.05); }
+  .image-drop.has-image { border-style: solid; border-color: var(--saffron); }
+  .image-drop-empty { padding: 48px 24px; text-align: center; }
+  .image-drop-icon { font-size: 2.4rem; margin-bottom: 10px; }
+  .image-drop-text { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+  .image-drop-hint { font-size: 0.8rem; color: rgba(42,24,16,0.5); }
+  .image-drop-preview { position: relative; height: 280px; }
+  .image-drop-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .image-drop-change {
+    position: absolute; bottom: 14px; right: 14px;
+    background: rgba(28,18,11,0.75); color: white;
+    padding: 8px 16px; border-radius: 999px; font-size: 0.8rem; font-weight: 600;
+    backdrop-filter: blur(4px);
+  }
+
+  .field-input {
+    width: 100%; padding: 14px 16px; border-radius: 10px;
+    border: 1.5px solid rgba(42,24,16,0.14); background: var(--cream);
+    font-size: 1rem; color: var(--ink); transition: border 0.2s, box-shadow 0.2s;
+  }
+  .field-input:focus { outline: none; border-color: var(--saffron); box-shadow: 0 0 0 4px rgba(232,163,61,0.15); }
+  .field-textarea {
+    width: 100%; padding: 14px 16px; border-radius: 10px;
+    border: 1.5px solid rgba(42,24,16,0.14); background: var(--cream);
+    font-size: 0.95rem; color: var(--ink); resize: vertical; line-height: 1.6;
+    transition: border 0.2s, box-shadow 0.2s; min-height: 130px;
+  }
+  .field-textarea:focus { outline: none; border-color: var(--saffron); box-shadow: 0 0 0 4px rgba(232,163,61,0.15); }
+  .field-hint { font-size: 0.78rem; color: rgba(42,24,16,0.45); margin-top: 8px; }
+
+  .country-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
+    gap: 10px;
+  }
+  .country-chip {
+    border: 1.5px solid rgba(42,24,16,0.14);
+    background: var(--cream);
+    border-radius: 10px;
+    padding: 12px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .country-chip:hover { border-color: var(--saffron); transform: translateY(-2px); }
+  .country-chip.selected {
+    border-color: var(--tomato);
+    background: rgba(196,67,47,0.08);
+    box-shadow: 0 0 0 3px rgba(196,67,47,0.12);
+  }
+  .country-chip-flag { font-size: 1.6rem; margin-bottom: 4px; }
+  .country-chip-name { font-size: 0.68rem; font-weight: 600; color: rgba(42,24,16,0.7); }
+
+  .submit-bar {
+    position: sticky; bottom: 0;
+    background: linear-gradient(180deg, transparent, var(--cream) 30%);
+    padding: 24px 0 0;
+    display: flex; gap: 12px;
+  }
+  .btn-submit {
+    flex: 1; padding: 17px; border-radius: 12px; border: none;
+    background: var(--tomato); color: white; font-weight: 700; font-size: 1rem;
+    box-shadow: 0 8px 24px rgba(196,67,47,0.35);
+    transition: transform 0.15s ease, background 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-submit:hover { background: var(--tomato-deep); transform: translateY(-2px); }
+  .btn-submit:disabled { opacity: 0.6; transform: none; cursor: default; }
+  .btn-cancel {
+    padding: 17px 26px; border-radius: 12px; border: 1.5px solid rgba(42,24,16,0.16);
+    background: var(--cream); color: var(--ink); font-weight: 600; font-size: 0.95rem;
+  }
+  .btn-cancel:hover { background: var(--paper); }
+
+  .toast {
+    position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-20px);
+    background: var(--char); color: var(--cream); padding: 14px 26px; border-radius: 999px;
+    font-size: 0.88rem; font-weight: 600; z-index: 500; opacity: 0; pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.22,1,0.36,1); box-shadow: var(--shadow-deep);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
 </head>
 <body>
 
-<nav class="navbar">
-  <a href="index.html" class="navbar-logo">Retseptlar <span>Dunyosi</span></a>
-  <div class="navbar-actions">
-    <a href="index.html"><button class="nav-btn nav-btn-ghost">← Orqaga</button></a>
-  </div>
+<nav class="topbar">
+  <a href="index.html" class="topbar-logo">Retseptlar <span>Dunyosi</span></a>
+  <a href="index.html" class="back-link">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+    Orqaga
+  </a>
 </nav>
 
 <div class="toast" id="toast"></div>
 
-<div class="page">
-  <div class="container" style="max-width:680px; padding-top:48px; padding-bottom:60px;">
+<div class="wrap">
+  <div class="page-eyebrow">Yangi retsept</div>
+  <h1 class="page-title">O'z taomingizni <em style="font-style:italic; color:var(--saffron);">dunyo bilan ulashing</em></h1>
+  <p class="page-subtitle">Bir necha qadamda retseptingizni qo'shing — minglab odam undan ilhom olsin</p>
 
-    <h1 style="font-family:var(--font-display); font-size:2rem; margin-bottom:8px;">Retsept qo'shish</h1>
-    <p style="color:rgba(42,24,16,0.6); margin-bottom:36px;">O'zingizning sevimli taomingizni dunyo bilan ulashing</p>
+  <form id="recipeForm" onsubmit="addRecipe(event)">
 
-    <form id="recipeForm" onsubmit="addRecipe(event)">
-
-      <!-- Rasm yuklash -->
-      <div class="form-group">
-        <label class="form-label">Taom rasmi</label>
-        <div id="imageUploadArea" style="
-          border: 2px dashed rgba(42,24,16,0.2);
-          border-radius: var(--radius);
-          padding: 32px;
-          text-align: center;
-          cursor: pointer;
-          background: var(--paper);
-          transition: border-color 0.2s;
-        " onclick="document.getElementById('imageInput').click()">
-          <div id="imagePreview" style="display:none;">
-            <img id="previewImg" style="max-height:200px; border-radius:6px; margin:0 auto 12px;">
-          </div>
-          <div id="uploadPlaceholder">
-            <div style="font-size:2rem; margin-bottom:8px;">📸</div>
-            <div style="font-weight:600; margin-bottom:4px;">Rasm yuklash</div>
-            <div style="font-size:0.82rem; color:rgba(42,24,16,0.5);">JPG, PNG — max 5MB</div>
-          </div>
-          <input type="file" id="imageInput" accept="image/*" style="display:none;" onchange="previewImage(this)">
+    <div class="step-card">
+      <div class="step-label"><span class="step-num">1</span> Taom rasmi</div>
+      <div id="imageUploadArea" class="image-drop" onclick="document.getElementById('imageInput').click()">
+        <div id="uploadPlaceholder" class="image-drop-empty">
+          <div class="image-drop-icon">📸</div>
+          <div class="image-drop-text">Rasmni shu yerga bosing yoki tashlang</div>
+          <div class="image-drop-hint">JPG yoki PNG — maksimal 5MB</div>
         </div>
+        <div id="imagePreview" class="image-drop-preview" style="display:none;">
+          <img id="previewImg" src="">
+          <div class="image-drop-change">↻ Almashtirish</div>
+        </div>
+        <input type="file" id="imageInput" accept="image/*" style="display:none;" onchange="previewImage(this)">
       </div>
+    </div>
 
-      <div class="form-group">
-        <label class="form-label">Taom nomi *</label>
-        <input type="text" class="form-input" id="title" placeholder="Masalan: O'zbek palov" required>
-      </div>
+    <div class="step-card">
+      <div class="step-label"><span class="step-num">2</span> Taom nomi</div>
+      <input type="text" class="field-input" id="title" placeholder="Masalan: O'zbek palov" required>
+    </div>
 
-      <div class="form-group">
-        <label class="form-label">Mamlakat</label>
-        <select class="form-select" id="country">
-          <option value="uz">🇺🇿 O'zbekiston</option>
-          <option value="it">🇮🇹 Italiya</option>
-          <option value="jp">🇯🇵 Yaponiya</option>
-          <option value="mx">🇲🇽 Meksika</option>
-          <option value="fr">🇫🇷 Frantsiya</option>
-          <option value="th">🇹🇭 Tailand</option>
-          <option value="vn">🇻🇳 Vetnam</option>
-          <option value="ua">🇺🇦 Ukraina</option>
-          <option value="in">🇮🇳 Hindiston</option>
-          <option value="cn">🇨🇳 Xitoy</option>
-          <option value="kr">🇰🇷 Koreya</option>
-          <option value="tr">🇹🇷 Turkiya</option>
-          <option value="es">🇪🇸 Ispaniya</option>
-          <option value="de">🇩🇪 Germaniya</option>
-          <option value="us">🇺🇸 Amerika</option>
-        </select>
-      </div>
+    <div class="step-card">
+      <div class="step-label"><span class="step-num">3</span> Qaysi mamlakat oshxonasi?</div>
+      <div class="country-grid" id="countryGrid"></div>
+      <input type="hidden" id="country" value="uz">
+    </div>
 
-      <div class="form-group">
-        <label class="form-label">Masalliqlar *</label>
-        <textarea class="form-textarea" id="ingredients" placeholder="Har bir masalliqni yangi qatorga yozing:&#10;1 kg mol go'shti&#10;2 ta piyoz&#10;..." required style="min-height:140px;"></textarea>
-      </div>
+    <div class="step-card">
+      <div class="step-label"><span class="step-num">4</span> Kerakli masalliqlar</div>
+      <textarea class="field-textarea" id="ingredients" placeholder="Har bir masalliqni yangi qatorga yozing:&#10;1 kg mol go'shti&#10;2 ta piyoz&#10;500 gr guruch" required></textarea>
+      <div class="field-hint">Har bir masalliq alohida qatorda bo'lsin</div>
+    </div>
 
-      <div class="form-group">
-        <label class="form-label">Tayyorlash bosqichlari *</label>
-        <textarea class="form-textarea" id="steps" placeholder="Har bir bosqichni yangi qatorga yozing:&#10;Go'shtni mayda to'g'rang&#10;Piyozni qovuring&#10;..." required style="min-height:180px;"></textarea>
-      </div>
+    <div class="step-card">
+      <div class="step-label"><span class="step-num">5</span> Tayyorlash bosqichlari</div>
+      <textarea class="field-textarea" id="steps" placeholder="Har bir bosqichni yangi qatorga yozing:&#10;Go'shtni mayda to'g'rang&#10;Piyozni qovuring&#10;Guruchni qo'shing" required style="min-height:180px;"></textarea>
+      <div class="field-hint">Har bir bosqich alohida qatorda bo'lsin — avtomatik raqamlanadi</div>
+    </div>
 
-      <div style="display:flex; gap:12px;">
-        <button type="submit" class="btn-primary" id="submitBtn">✓ Retseptni saqlash</button>
-        <a href="index.html"><button type="button" class="btn-secondary">Bekor qilish</button></a>
-      </div>
+    <div class="submit-bar">
+      <a href="index.html"><button type="button" class="btn-cancel">Bekor qilish</button></a>
+      <button type="submit" class="btn-submit" id="submitBtn">✓ Retseptni nashr qilish</button>
+    </div>
 
-    </form>
-  </div>
+  </form>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -102,8 +243,44 @@ const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let selectedFile = null;
+let selectedCountry = "uz";
 
-// Kirish tekshiruvi
+const COUNTRIES = [
+  { code: "uz", flag: "🇺🇿", name: "O'zbek" },
+  { code: "it", flag: "🇮🇹", name: "Italiya" },
+  { code: "jp", flag: "🇯🇵", name: "Yaponiya" },
+  { code: "mx", flag: "🇲🇽", name: "Meksika" },
+  { code: "fr", flag: "🇫🇷", name: "Fransiya" },
+  { code: "th", flag: "🇹🇭", name: "Tailand" },
+  { code: "vn", flag: "🇻🇳", name: "Vetnam" },
+  { code: "ua", flag: "🇺🇦", name: "Ukraina" },
+  { code: "in", flag: "🇮🇳", name: "Hindiston" },
+  { code: "cn", flag: "🇨🇳", name: "Xitoy" },
+  { code: "kr", flag: "🇰🇷", name: "Koreya" },
+  { code: "tr", flag: "🇹🇷", name: "Turkiya" },
+  { code: "es", flag: "🇪🇸", name: "Ispaniya" },
+  { code: "de", flag: "🇩🇪", name: "Germaniya" },
+  { code: "us", flag: "🇺🇸", name: "Amerika" }
+];
+
+function renderCountryGrid() {
+  const grid = document.getElementById("countryGrid");
+  grid.innerHTML = COUNTRIES.map(c => `
+    <div class="country-chip ${c.code === selectedCountry ? 'selected' : ''}" onclick="selectCountry('${c.code}')">
+      <div class="country-chip-flag">${c.flag}</div>
+      <div class="country-chip-name">${c.name}</div>
+    </div>
+  `).join("");
+}
+
+function selectCountry(code) {
+  selectedCountry = code;
+  document.getElementById("country").value = code;
+  renderCountryGrid();
+}
+
+renderCountryGrid();
+
 async function checkAuth() {
   const { data: { user } } = await sb.auth.getUser();
   if (!user) window.location.href = "login.html";
@@ -119,6 +296,7 @@ function previewImage(input) {
     document.getElementById("previewImg").src = e.target.result;
     document.getElementById("imagePreview").style.display = "block";
     document.getElementById("uploadPlaceholder").style.display = "none";
+    document.getElementById("imageUploadArea").classList.add("has-image");
   };
   reader.readAsDataURL(file);
 }
@@ -134,24 +312,27 @@ async function addRecipe(e) {
 
   let imageUrl = null;
 
-  // Rasm yuklash
   if (selectedFile) {
     const fileExt = selectedFile.name.split(".").pop();
     const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-    const { data, error } = await sb.storage.from("recipe-images").upload(fileName, selectedFile);
-    if (!error) {
+    const { error: uploadError } = await sb.storage.from("recipe-images").upload(fileName, selectedFile);
+    if (!uploadError) {
       const { data: urlData } = sb.storage.from("recipe-images").getPublicUrl(fileName);
       imageUrl = urlData.publicUrl;
+    } else {
+      showToast("Rasm yuklashda xato: " + uploadError.message);
     }
   }
 
   const recipe = {
     user_id: user.id,
     title: document.getElementById("title").value,
-    country: document.getElementById("country").value,
+    country: selectedCountry,
     ingredients: document.getElementById("ingredients").value,
     steps: document.getElementById("steps").value,
-    image_url: imageUrl
+    image_url: imageUrl,
+    rating_sum: 0,
+    rating_count: 0
   };
 
   const { error } = await sb.from("recipes").insert(recipe);
@@ -159,7 +340,7 @@ async function addRecipe(e) {
   if (error) {
     showToast("Xato yuz berdi: " + error.message);
     btn.disabled = false;
-    btn.textContent = "✓ Retseptni saqlash";
+    btn.textContent = "✓ Retseptni nashr qilish";
   } else {
     showToast("Retsept muvaffaqiyatli qo'shildi! 🎉");
     setTimeout(() => window.location.href = "index.html", 1500);

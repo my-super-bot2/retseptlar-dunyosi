@@ -414,8 +414,8 @@ input, textarea {
 .picks-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 22px;
-  max-width: 980px;
+  gap: 16px;
+  max-width: 720px;
   margin: 0 auto;
   padding: 0 28px;
 }
@@ -424,7 +424,7 @@ input, textarea {
   position: relative;
   border-radius: var(--radius-card);
   overflow: hidden;
-  height: 280px;
+  height: 160px;
   cursor: pointer;
   box-shadow: var(--shadow-soft);
   transition: transform 0.4s var(--ease), box-shadow 0.4s var(--ease);
@@ -452,16 +452,16 @@ input, textarea {
 
 .pick-flag {
   position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 36px;
-  height: 26px;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 20px;
   border-radius: 3px;
   background: rgba(251,243,231,0.95);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
+  font-size: 0.95rem;
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
@@ -470,19 +470,19 @@ input, textarea {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 20px;
+  padding: 12px;
   color: var(--cream);
 }
 
 .pick-name {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1.2rem;
-  margin-bottom: 4px;
+  font-size: 0.92rem;
+  margin-bottom: 2px;
 }
 
 .pick-meta {
-  font-size: 0.78rem;
+  font-size: 0.68rem;
   color: rgba(251,243,231,0.7);
   display: flex;
   align-items: center;
@@ -491,14 +491,14 @@ input, textarea {
 
 .pick-rating {
   position: absolute;
-  top: 14px;
-  left: 14px;
+  top: 8px;
+  left: 8px;
   background: rgba(28,18,11,0.55);
   backdrop-filter: blur(6px);
   color: var(--saffron);
-  font-size: 0.78rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  padding: 5px 10px;
+  padding: 3px 8px;
   border-radius: var(--radius-pill);
   display: flex;
   align-items: center;
@@ -1190,7 +1190,8 @@ input, textarea {
    ============================================ */
 
 @media (max-width: 920px) {
-  .picks-grid { grid-template-columns: 1fr; max-width: 420px; }
+  .picks-grid { gap: 10px; max-width: 360px; }
+  .pick-card { height: 110px; }
   .recipes-grid { grid-template-columns: repeat(2, 1fr); }
   .detail-hero { grid-template-columns: 1fr; gap: 28px; }
   .detail-content { grid-template-columns: 1fr; gap: 40px; }
@@ -1207,3 +1208,73 @@ input, textarea {
   .search-box { padding: 6px 6px 6px 18px; }
   .section { padding: 60px 0; }
 }
+
+/* ============================================
+   QO'SHIMCHA SAHIFALAR UCHUN (login/add-recipe/profile)
+   ============================================ */
+
+.navbar-logo {
+  font-family: var(--font-display, 'Fraunces', serif);
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: var(--ink, #2A1810);
+}
+.navbar-logo span { color: var(--saffron, #E8A33D); }
+
+.navbar-actions { display: flex; align-items: center; gap: 12px; }
+
+.nav-btn {
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+.nav-btn-ghost { color: var(--ink, #2A1810); border: 1px solid rgba(42,24,16,0.16); }
+.nav-btn-ghost:hover { background: var(--paper, #F4E9D8); }
+.nav-btn-solid { background: var(--tomato, #C4432F); color: white; }
+.nav-btn-solid:hover { background: var(--tomato-deep, #9E331F); }
+
+.page { padding-top: 80px; min-height: 100vh; }
+
+.form-group { margin-bottom: 18px; }
+.form-label { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 6px; color: var(--ink, #2A1810); }
+.form-input, .form-textarea, .form-select {
+  width: 100%; padding: 12px 14px; border-radius: 8px;
+  border: 1px solid rgba(42,24,16,0.16); background: var(--paper, #F4E9D8);
+  font-size: 0.92rem; color: var(--ink, #2A1810); transition: border 0.2s;
+  font-family: var(--font-body, 'Outfit', sans-serif);
+}
+.form-input:focus, .form-textarea:focus, .form-select:focus { outline: none; border-color: var(--saffron, #E8A33D); }
+.form-textarea { min-height: 100px; resize: vertical; }
+
+.btn-primary {
+  background: var(--tomato, #C4432F); color: white; padding: 12px 28px;
+  border-radius: 8px; font-weight: 600; font-size: 0.92rem;
+  transition: background 0.2s; display: inline-flex; align-items: center; gap: 8px;
+  border: none; cursor: pointer; font-family: var(--font-body, 'Outfit', sans-serif);
+}
+.btn-primary:hover { background: var(--tomato-deep, #9E331F); }
+.btn-primary:disabled { opacity: 0.6; cursor: default; }
+
+.btn-secondary {
+  background: var(--paper, #F4E9D8); color: var(--ink, #2A1810); padding: 12px 28px;
+  border-radius: 8px; font-weight: 600; font-size: 0.92rem;
+  border: 1px solid rgba(42,24,16,0.16); transition: background 0.2s; cursor: pointer;
+  font-family: var(--font-body, 'Outfit', sans-serif);
+}
+.btn-secondary:hover { background: var(--cream, #FBF3E7); }
+
+.profile-header {
+  display: flex; align-items: center; gap: 24px; padding: 32px;
+  background: var(--paper, #F4E9D8); border-radius: 12px;
+  margin-bottom: 32px; flex-wrap: wrap;
+}
+.profile-avatar-wrap { position: relative; width: 96px; height: 96px; flex-shrink: 0; }
+.profile-avatar-wrap img { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; border: 3px solid var(--saffron, #E8A33D); }
+.profile-info h2 { font-family: var(--font-display, 'Fraunces', serif); font-size: 1.5rem; margin-bottom: 4px; }
+.profile-info .username { color: rgba(42,24,16,0.55); font-size: 0.9rem; margin-bottom: 10px; }
+.profile-stats { display: flex; gap: 24px; margin-top: 12px; }
+.profile-stat { text-align: center; }
+.profile-stat-value { font-family: var(--font-display, 'Fraunces', serif); font-size: 1.3rem; font-weight: 700; color: var(--tomato, #C4432F); }
+.profile-stat-label { font-size: 0.74rem; color: rgba(42,24,16,0.5); }

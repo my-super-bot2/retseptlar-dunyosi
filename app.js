@@ -1,47 +1,52 @@
 // ============================================
-// RETSEPTLAR DUNYOSI — APP LOGIC
+// RETSEPTLAR DUNYOSI — APP LOGIC (Supabase bilan)
 // ============================================
 
 (function () {
   "use strict";
 
-  // ---------- STATE ----------
-  let currentLang = "uz";
-  let currentRecipeId = null;
-  let userVotes = JSON.parse(localStorageGet("rd_votes")) || {}; // recipeId -> stars given by user
-  let userReviews = JSON.parse(localStorageGet("rd_reviews")) || {}; // recipeId -> [reviews]
-  let liveRatings = JSON.parse(localStorageGet("rd_ratings")) || {}; // recipeId -> {sum, count}
-  let pendingFormStars = 0;
-  let EXTRA_RECIPES = []; // TheMealDB'dan topilib, tarjima qilingan retseptlar shu yerga qo'shiladi
+  // ---------- SUPABASE ----------
+  var SUPABASE_URL = "https://djpdfvngatsbfrenfzah.supabase.co";
+  var SUPABASE_KEY = "sb_publishable_8fhNqJTTa7mCre0IBCuY8Q_2_K4rCE1";
+  var sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // Safe localStorage wrapper (artifacts/sandboxed contexts may block it)
-  function localStorageGet(key) {
-    try { return localStorage.getItem(key); } catch (e) { return null; }
-  }
-  function localStorageSet(key, val) {
-    try { localStorage.setItem(key, val); } catch (e) { /* ignore */ }
-  }
+  // ---------- STATE ----------
+  var currentLang = "uz";
+  var currentRecipeId = null;
+  var currentUser = null;
+  var currentProfile = null;
+  var EXTRA_RECIPES = []; // TheMealDB'dan kelgan retseptlar
+  var DB_RECIPES = [];    // Supabase'dan kelgan foydalanuvchi retseptlari
+
+  var COUNTRY_FLAGS = {uz:"🇺🇿",it:"🇮🇹",jp:"🇯🇵",mx:"🇲🇽",fr:"🇫🇷",th:"🇹🇭",vn:"🇻🇳",ua:"🇺🇦",in:"🇮🇳",cn:"🇨🇳",kr:"🇰🇷",tr:"🇹🇷",es:"🇪🇸",de:"🇩🇪",us:"🇺🇸"};
+  var COUNTRY_LABELS_UZ = {uz:"O'zbekiston",it:"Italiya",jp:"Yaponiya",mx:"Meksika",fr:"Frantsiya",th:"Tailand",vn:"Vetnam",ua:"Ukraina",in:"Hindiston",cn:"Xitoy",kr:"Koreya",tr:"Turkiya",es:"Ispaniya",de:"Germaniya",us:"Amerika"};
 
   // ---------- INIT ----------
   document.addEventListener("DOMContentLoaded", init);
 
   function init() {
-    // simulate brief loading for the spinner to be seen, then reveal
     setTimeout(hideLoader, 700);
 
-    renderPicks();
-    renderAllRecipes();
-    applyLanguage(currentLang);
     bindNav();
     bindSearch();
     bindLangSwitch();
     bindBack();
     bindReviewForm();
-    bindAISection();
 
-    setTimeout(function () {
-      showToast(UI_TEXT[currentLang].welcomeToast);
-    }, 1200);
+    initAuth().then(function () {
+      loadDbRecipes().then(function () {
+        renderPicks();
+        renderAllRecipes();
+        applyLanguage(currentLang);
+
+        // Agar URL'da ?recipe=ID bo'lsa, o'sha retseptni avtomatik ochamiz
+        var params = new URLSearchParams(window.location.search);
+        var recipeParam = params.get("recipe");
+        if (recipeParam) {
+          openDetail("db-" + recipeParam);
+        }
+      });
+    });
   }
 
   function hideLoader() {
@@ -49,46 +54,103 @@
     if (loader) loader.classList.add("hidden");
   }
 
-  // ---------- NAVBAR SCROLL ----------
-  function bindNav() {
-    var nav = document.getElementById("navbar");
-    window.addEventListener("scroll", function () {
-      if (window.scrollY > 40) nav.classList.add("scrolled");
-      else nav.classList.remove("scrolled");
+  // ---------- AUTH ----------
+  function initAuth() {
+    return sb.auth.getUser().then(function (res) {
+      currentUser = res.data.user;
+      if (currentUser) {
+        return sb.from("profiles").select("*").eq("id", currentUser.id).single().then(function (res2) {
+          currentProfile = res2.data;
+          renderAuthLoggedIn();
+        });
+      } else {
+        renderAuthLoggedOut();
+      }
+    });
+  }
+
+  function renderAuthLoggedIn() {
+    document.getElementById("addRecipeBtn").style.display = "inline-block";
+    var avatarUrl = (currentProfile && currentProfile.avatar_url) || ("https://api.dicebear.com/7.x/initials/svg?seed=" + ((currentProfile && currentProfile.username) || "U"));
+    document.getElementById("authArea").innerHTML =
+      '<div style="position:relative;">' +
+        '<div id="avatarToggle" style="width:36px;height:36px;border-radius:50%;overflow:hidden;border:2px solid var(--saffron);cursor:pointer;">' +
+          '<img src="' + avatarUrl + '" style="width:100%;height:100%;object-fit:cover;">' +
+        '</div>' +
+        '<div id="authDropdown" style="position:absolute;top:calc(100% + 8px);right:0;background:var(--cream);border-radius:8px;box-shadow:0 8px 32px rgba(28,18,11,0.18);border:1px solid rgba(42,24,16,0.08);min-width:170px;overflow:hidden;display:none;z-index:200;">' +
+          '<button onclick="location.href=\'profile.html\'" style="display:flex;align-items:center;gap:8px;padding:12px 16px;font-size:0.86rem;width:100%;text-align:left;border:none;background:none;cursor:pointer;color:var(--ink);font-family:var(--font-body);">👤 Profil</button>' +
+          '<button onclick="window.__signOut()" style="display:flex;align-items:center;gap:8px;padding:12px 16px;font-size:0.86rem;width:100%;text-align:left;border:none;background:none;cursor:pointer;color:var(--tomato);font-family:var(--font-body);">🚪 Chiqish</button>' +
+        '</div>' +
+      '</div>';
+
+    document.getElementById("avatarToggle").addEventListener("click", function(e) {
+      e.stopPropagation();
+      var dd = document.getElementById("authDropdown");
+      dd.style.display = dd.style.display === "none" ? "block" : "none";
+    });
+
+    document.addEventListener("click", function() {
+      var dd = document.getElementById("authDropdown");
+      if (dd) dd.style.display = "none";
+    });
+  }
+
+  function renderAuthLoggedOut() {
+    document.getElementById("authArea").innerHTML =
+      '<a href="login.html"><button class="lang-btn">Kirish</button></a>';
+  }
+
+  window.__signOut = function () {
+    sb.auth.signOut().then(function () { window.location.reload(); });
+  };
+
+  // ---------- SUPABASE RETSEPTLARNI YUKLASH ----------
+  function loadDbRecipes() {
+    return sb.from("recipes").select("*, profiles(username, avatar_url, full_name)").order("created_at", { ascending: false }).then(function (res) {
+      var rows = res.data || [];
+      DB_RECIPES = rows.map(function (r) {
+        var ingredients = (r.ingredients || "").split("\n").filter(function (s) { return s.trim(); });
+        var steps = (r.steps || "").split("\n").filter(function (s) { return s.trim(); });
+        var name = { uz: r.title, ru: r.title, en: r.title };
+        var authorName = (r.profiles && r.profiles.username) || "Oshpaz";
+        var tagline = { uz: authorName + " retsepti", ru: "Рецепт от " + authorName, en: "Recipe by " + authorName };
+        return {
+          id: "db-" + r.id,
+          dbId: r.id,
+          flag: COUNTRY_FLAGS[r.country] || "🌍",
+          image: r.image_url || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80",
+          name: name,
+          tagline: tagline,
+          ingredients: { uz: ingredients, ru: ingredients, en: ingredients },
+          steps: { uz: steps, ru: steps, en: steps },
+          time: null,
+          servings: null,
+          difficulty: { uz: "—", ru: "—", en: "—" },
+          country: r.country,
+          rating_sum: r.rating_sum || 0,
+          rating_count: r.rating_count || 0,
+          fromDB: true
+        };
+      });
     });
   }
 
   // ---------- RATING HELPERS ----------
-  function getRatingData(recipe) {
-    var stored = liveRatings[recipe.id];
-    if (stored) return stored;
-    // seed from base data
-    return { sum: recipe.rating * recipe.votes, count: recipe.votes };
-  }
-
+  // Mahalliy (data.js) retseptlar uchun — eski statik baho
+  // DB retseptlar uchun — Supabase'dagi rating_sum/rating_count
   function getAverage(recipe) {
-    var d = getRatingData(recipe);
-    return d.count ? (d.sum / d.count) : 0;
-  }
-
-  function castVote(recipe, stars) {
-    var d = getRatingData(recipe);
-    if (userVotes[recipe.id]) {
-      // update existing vote
-      d.sum = d.sum - userVotes[recipe.id] + stars;
-    } else {
-      d.sum += stars;
-      d.count += 1;
+    if (recipe.fromDB) {
+      return recipe.rating_count ? (recipe.rating_sum / recipe.rating_count) : 0;
     }
-    userVotes[recipe.id] = stars;
-    liveRatings[recipe.id] = d;
-    localStorageSet("rd_votes", JSON.stringify(userVotes));
-    localStorageSet("rd_ratings", JSON.stringify(liveRatings));
+    if (recipe.fromAPI) {
+      return recipe.rating || 0;
+    }
+    return recipe.rating || 0;
   }
 
   // ---------- RENDER: PICKS (Hero "Kun taomlari") ----------
   function renderPicks() {
-    var picks = [RECIPES[0], RECIPES[1], RECIPES[2]]; // osh, pizza, sushi as featured
+    var picks = [RECIPES[0], RECIPES[1], RECIPES[2]];
     var grid = document.getElementById("picksGrid");
     grid.innerHTML = picks.map(function (r) {
       var avg = getAverage(r).toFixed(1);
@@ -114,8 +176,9 @@
   }
 
   // ---------- RENDER: ALL RECIPES GRID ----------
+  // DB retseptlar (foydalanuvchilar qo'shgan) + mahalliy retseptlar birga ko'rsatiladi
   function renderAllRecipes(filterList) {
-    var list = filterList || RECIPES;
+    var list = filterList || DB_RECIPES.concat(RECIPES);
     var grid = document.getElementById("recipesGrid");
 
     if (list.length === 0) {
@@ -126,6 +189,7 @@
     grid.innerHTML = list.map(function (r) {
       var avg = getAverage(r).toFixed(1);
       var timeLabel = r.time != null ? (r.time + " " + UI_TEXT[currentLang].minutes) : "";
+      var dbBadge = r.fromDB ? '<span style="background:var(--basil);color:white;font-size:0.65rem;padding:2px 8px;border-radius:4px;font-weight:700;margin-left:6px;">USER</span>' : "";
       return (
         '<div class="recipe-card" data-id="' + r.id + '">' +
           '<div class="recipe-card-img">' +
@@ -133,7 +197,7 @@
             '<div class="recipe-card-flag">' + r.flag + '</div>' +
           '</div>' +
           '<div class="recipe-card-body">' +
-            '<div class="recipe-card-name">' + r.name[currentLang] + '</div>' +
+            '<div class="recipe-card-name">' + r.name[currentLang] + dbBadge + '</div>' +
             '<div class="recipe-card-tagline">' + r.tagline[currentLang] + '</div>' +
             '<div class="recipe-card-footer">' +
               '<span>' + timeLabel + '</span>' +
@@ -152,8 +216,8 @@
   }
 
   // ---------- SEARCH ----------
-  var apiResultsCache = {}; // query -> array of built recipe objects (per session)
-  var currentSearchToken = 0; // eskirgan so'rovlarni bekor qilish uchun
+  var apiResultsCache = {};
+  var currentSearchToken = 0;
 
   function bindSearch() {
     var input = document.getElementById("searchInput");
@@ -218,85 +282,55 @@
     });
   }
 
-  // Asosiy qidiruv: avval mahalliy 10 taom, keyin TheMealDB (internet bazasi)
   function runSearch(query) {
     var spinner = document.getElementById("miniSpinner");
     var token = ++currentSearchToken;
 
     var localResults = searchLocalRecipes(query);
+    var dbResults = searchDbRecipes(query);
+    var combinedLocal = dbResults.concat(localResults);
 
-    // Avval mahalliy natijalarni darhol ko'rsatamiz (tez javob)
-    renderDropdown(localResults, true);
-    renderAllRecipes(localResults, true);
+    renderDropdown(combinedLocal, true);
+    renderAllRecipes(combinedLocal);
 
     var cacheKey = query.toLowerCase() + "::" + currentLang;
     if (apiResultsCache[cacheKey]) {
       spinner.classList.remove("active");
-      var combined = localResults.concat(apiResultsCache[cacheKey]);
+      var combined = combinedLocal.concat(apiResultsCache[cacheKey]);
       renderDropdown(combined);
       renderAllRecipes(combined);
       return;
     }
 
-    // Keyin TheMealDB'dan qidiramiz va tarjima qilamiz (sal sekinroq)
     RecipeAPI.searchMealDB(query).then(function (meals) {
-      if (token !== currentSearchToken) return; // eski so'rov, e'tiborsiz qoldiramiz
+      if (token !== currentSearchToken) return;
       if (!meals || meals.length === 0) {
         spinner.classList.remove("active");
-        if (localResults.length === 0) {
-          showNoResultsWithAIHint(query);
+        if (combinedLocal.length === 0) {
+          renderDropdown([]);
+          renderAllRecipes([]);
         }
         return;
       }
 
-      var toBuild = meals.slice(0, 9); // bir martada juda ko'p tarjima qilib yubormaslik uchun
+      var toBuild = meals.slice(0, 9);
       Promise.all(toBuild.map(function (meal) {
         return RecipeAPI.buildLocalizedRecipe(meal, currentLang);
       })).then(function (builtRecipes) {
         if (token !== currentSearchToken) return;
         spinner.classList.remove("active");
         apiResultsCache[cacheKey] = builtRecipes;
-        // API natijalarini global ro'yxatga ham qo'shamiz, detail sahifa ochilganda topilsin
         builtRecipes.forEach(function (r) {
           if (!findRecipe(r.id)) EXTRA_RECIPES.push(r);
         });
-        var combined = localResults.concat(builtRecipes);
+        var combined = combinedLocal.concat(builtRecipes);
         renderDropdown(combined);
         renderAllRecipes(combined);
       });
     }).catch(function () {
       if (token !== currentSearchToken) return;
       spinner.classList.remove("active");
-      if (localResults.length === 0) {
-        showNoResultsWithAIHint(query);
-      }
     });
-  }
-
-  // Hech narsa topilmaganda — odamni pastdagi "AI Oshpaz" bo'limiga yo'naltiramiz
-  function showNoResultsWithAIHint(query) {
-    var dropdown = document.getElementById("searchDropdown");
-    var msg = currentLang === "uz"
-      ? "Topilmadi. Pastdagi \"AI Oshpazdan so'rang\" bo'limida so'rab ko'ring →"
-      : currentLang === "ru"
-      ? "Не найдено. Попробуйте спросить в разделе \"AI-повар\" ниже →"
-      : "Not found. Try asking the AI Chef section below →";
-    dropdown.innerHTML = '<div class="dropdown-empty" id="aiHintLink" style="cursor:pointer; text-decoration:underline;">' + msg + '</div>';
-    dropdown.classList.add("open");
-
-    var hintLink = document.getElementById("aiHintLink");
-    if (hintLink) {
-      hintLink.addEventListener("click", function () {
-        dropdown.classList.remove("open");
-        var aiSection = document.getElementById("aiSection");
-        var aiInput = document.getElementById("aiInput");
-        aiSection.scrollIntoView({ behavior: "smooth" });
-        aiInput.value = query;
-        aiInput.focus();
-      });
-    }
-
-    renderAllRecipes([]);
   }
 
   function searchLocalRecipes(query) {
@@ -305,6 +339,13 @@
       var nameMatch = Object.values(r.name).some(function (n) { return n.toLowerCase().indexOf(q) !== -1; });
       var countryMatch = Object.values(COUNTRY_NAMES[r.country]).some(function (n) { return n.toLowerCase().indexOf(q) !== -1; });
       return nameMatch || countryMatch;
+    });
+  }
+
+  function searchDbRecipes(query) {
+    var q = query.toLowerCase();
+    return DB_RECIPES.filter(function (r) {
+      return r.name.uz.toLowerCase().indexOf(q) !== -1;
     });
   }
 
@@ -337,12 +378,12 @@
 
   // ---------- LANGUAGE SWITCH ----------
   function bindLangSwitch() {
-    document.querySelectorAll(".lang-btn").forEach(function (btn) {
+    document.querySelectorAll(".lang-btn[data-lang]").forEach(function (btn) {
       btn.addEventListener("click", function () {
         var lang = btn.getAttribute("data-lang");
         if (lang === currentLang) return;
         currentLang = lang;
-        document.querySelectorAll(".lang-btn").forEach(function (b) { b.classList.remove("active"); });
+        document.querySelectorAll(".lang-btn[data-lang]").forEach(function (b) { b.classList.remove("active"); });
         btn.classList.add("active");
         document.documentElement.lang = lang;
         applyLanguage(lang);
@@ -362,15 +403,6 @@
     document.getElementById("searchInput").placeholder = t.searchPlaceholder;
     setText("picksLabel", t.todaysPicks);
     setText("allEyebrow", lang === "uz" ? "Katalog" : lang === "ru" ? "Каталог" : "Catalog");
-    setText("aiEyebrow", lang === "uz" ? "AI Yordamchi" : lang === "ru" ? "AI Помощник" : "AI Assistant");
-    setText("aiTitle", lang === "uz" ? "AI Oshpazdan so'rang" : lang === "ru" ? "Спросите AI-повара" : "Ask the AI Chef");
-    setText("aiSubtitle", lang === "uz" ? "Istalgan taom haqida so'rang — dunyodagi har qanday retseptni bilaman" : lang === "ru" ? "Спросите о любом блюде — я знаю любой рецепт в мире" : "Ask about any dish — I know recipes from around the world");
-    document.getElementById("aiInput").placeholder = lang === "uz"
-      ? "Masalan: Manti qanday tayyorlanadi? yoki Bolgariya milliy taomlari qanaqa?"
-      : lang === "ru"
-      ? "Например: Как приготовить манты? или Какая национальная кухня в Болгарии?"
-      : "E.g. How do I make manti? or What are Bulgaria's national dishes?";
-    setText("aiSubmitText", lang === "uz" ? "So'rash" : lang === "ru" ? "Спросить" : "Ask");
     setText("allRecipesTitle", t.allRecipes);
     setText("footerText", t.footerText);
     setText("backBtnText", t.backToResults);
@@ -380,7 +412,6 @@
     setText("addReviewTitle", t.addReview);
     setText("rateThisLabel", t.rateThis);
     setText("voteFeedback", t.voted);
-    document.getElementById("reviewName").placeholder = t.yourName;
     document.getElementById("reviewText").placeholder = t.yourReview;
     setText("reviewSubmitBtn", t.submit);
     setText("loaderText", t.loading);
@@ -425,6 +456,8 @@
   }
 
   function findRecipe(id) {
+    var db = DB_RECIPES.filter(function (r) { return r.id === id; })[0];
+    if (db) return db;
     var local = RECIPES.filter(function (r) { return r.id === id; })[0];
     if (local) return local;
     return EXTRA_RECIPES.filter(function (r) { return r.id === id; })[0];
@@ -440,9 +473,7 @@
     document.getElementById("detailImg").alt = r.name[lang];
     document.getElementById("detailFlagEmoji").textContent = r.flag;
 
-    var countryLabel = r.fromAPI
-      ? (r.country || "—")
-      : COUNTRY_NAMES[r.country][lang];
+    var countryLabel = r.fromAPI ? (r.country || "—") : (COUNTRY_NAMES[r.country] ? COUNTRY_NAMES[r.country][lang] : (COUNTRY_LABELS_UZ[r.country] || "—"));
     document.getElementById("detailCountryName").textContent = countryLabel;
 
     document.getElementById("detailTitle").textContent = r.name[lang];
@@ -459,50 +490,76 @@
       return "<li><span>" + step + "</span></li>";
     }).join("");
 
-    renderStars(r);
-    renderReviews(r);
-    renderReviewFormStars();
+    var ratingBlock = document.getElementById("ratingBlock");
+    var reviewForm = document.getElementById("reviewFormWrap");
+
+    if (r.fromDB) {
+      // Faqat foydalanuvchi qo'shgan retseptlarga baho/komment qo'yish mumkin
+      ratingBlock.style.display = "";
+      reviewForm.style.display = "";
+      renderDbStars(r);
+      renderDbReviews(r);
+    } else {
+      // Mahalliy va API retseptlarga baho/komment yopiq
+      ratingBlock.style.display = "none";
+      reviewForm.style.display = "none";
+      document.getElementById("reviewsList").innerHTML = '<div class="no-reviews">' + (lang === "uz" ? "Bu retsept uchun fikrlar mavjud emas" : lang === "ru" ? "Отзывы недоступны для этого рецепта" : "Reviews unavailable for this recipe") + '</div>';
+    }
 
     document.title = r.name[lang] + " — " + t.siteTitle;
   }
 
-  // ---------- STAR RATING (detail page) ----------
-  function renderStars(recipe) {
+  // ---------- DB STAR RATING (faqat fromDB retseptlar uchun) ----------
+  function renderDbStars(recipe) {
     var row = document.getElementById("starsRow");
-    var userStars = userVotes[recipe.id] || 0;
     row.innerHTML = "";
 
     for (var i = 1; i <= 5; i++) {
       var btn = document.createElement("button");
-      btn.className = "star-btn" + (i <= userStars ? " filled" : "");
+      btn.className = "star-btn";
       btn.textContent = "★";
       btn.setAttribute("data-value", i);
-      btn.setAttribute("aria-label", i + " star");
-      (function (starValue, recipeRef) {
-        btn.addEventListener("mouseenter", function () {
-          highlightStars(row, starValue);
-        });
-        btn.addEventListener("click", function () {
-          castVote(recipeRef, starValue);
-          renderStars(recipeRef);
-          renderPicks();
-          var feedback = document.getElementById("voteFeedback");
-          feedback.classList.add("show");
-          showToast(UI_TEXT[currentLang].voted);
-        });
-      })(i, recipe);
+      (function (starValue) {
+        btn.addEventListener("mouseenter", function () { highlightStars(row, starValue); });
+        btn.addEventListener("click", function () { castDbVote(recipe, starValue); });
+      })(i);
       row.appendChild(btn);
     }
 
-    row.addEventListener("mouseleave", function () {
-      highlightStars(row, userVotes[recipe.id] || 0);
-    });
+    row.addEventListener("mouseleave", function () { highlightStars(row, 0); });
+    document.getElementById("voteFeedback").classList.remove("show");
 
-    if (userStars > 0) {
-      document.getElementById("voteFeedback").classList.add("show");
-    } else {
-      document.getElementById("voteFeedback").classList.remove("show");
+    if (!currentUser) {
+      row.innerHTML = '<span style="font-size:0.85rem; color:rgba(42,24,16,0.5);">Baholash uchun <a href="login.html" style="color:var(--tomato); font-weight:600;">kiring</a></span>';
     }
+  }
+
+  function castDbVote(recipe, stars) {
+    if (!currentUser) { window.location.href = "login.html"; return; }
+
+    sb.from("ratings").select("*").eq("recipe_id", recipe.dbId).eq("user_id", currentUser.id).single().then(function (res) {
+      if (res.data) {
+        showToast(currentLang === "uz" ? "Siz allaqachon baho bergansiz" : currentLang === "ru" ? "Вы уже оценили" : "You already rated this");
+        return;
+      }
+
+      sb.from("ratings").insert({ recipe_id: recipe.dbId, user_id: currentUser.id, stars: stars }).then(function (insertRes) {
+        if (insertRes.error) {
+          showToast("Xato: " + insertRes.error.message);
+          return;
+        }
+        var newSum = (recipe.rating_sum || 0) + stars;
+        var newCount = (recipe.rating_count || 0) + 1;
+        sb.from("recipes").update({ rating_sum: newSum, rating_count: newCount }).eq("id", recipe.dbId).then(function () {
+          recipe.rating_sum = newSum;
+          recipe.rating_count = newCount;
+          highlightStars(document.getElementById("starsRow"), stars);
+          document.getElementById("voteFeedback").classList.add("show");
+          showToast(UI_TEXT[currentLang].voted);
+          renderAllRecipes();
+        });
+      });
+    });
   }
 
   function highlightStars(row, count) {
@@ -512,122 +569,56 @@
     });
   }
 
-  // ---------- REVIEWS ----------
-  function renderReviews(recipe) {
+  // ---------- DB REVIEWS (faqat fromDB retseptlar uchun) ----------
+  function renderDbReviews(recipe) {
     var list = document.getElementById("reviewsList");
-    var seeded = SEED_REVIEWS[recipe.id] || [];
-    var added = userReviews[recipe.id] || [];
-    var all = seeded.concat(added);
+    list.innerHTML = '<div class="spinner" style="width:24px;height:24px;"></div>';
 
-    if (all.length === 0) {
-      list.innerHTML = '<div class="no-reviews">' + UI_TEXT[currentLang].noReviewsYet + '</div>';
-      return;
-    }
-
-    list.innerHTML = all.map(function (rev) {
-      var text = typeof rev.text === "object" ? (rev.text[currentLang] || rev.text.uz) : rev.text;
-      var stars = "★".repeat(rev.stars) + "☆".repeat(5 - rev.stars);
-      return (
-        '<div class="review-card">' +
-          '<div class="review-card-head">' +
-            '<span class="review-card-name">' + escapeHtml(rev.name) + '</span>' +
-            '<span class="review-card-stars">' + stars + '</span>' +
-          '</div>' +
-          '<div class="review-card-text">' + escapeHtml(text) + '</div>' +
-        '</div>'
-      );
-    }).join("");
-  }
-
-  function renderReviewFormStars() {
-    var wrap = document.getElementById("reviewFormStars");
-    wrap.innerHTML = "";
-    pendingFormStars = 0;
-    for (var i = 1; i <= 5; i++) {
-      var btn = document.createElement("button");
-      btn.className = "star-btn";
-      btn.textContent = "★";
-      btn.type = "button";
-      (function (val) {
-        btn.addEventListener("mouseenter", function () { highlightStars(wrap, val); });
-        btn.addEventListener("click", function () {
-          pendingFormStars = val;
-          highlightStars(wrap, val);
-        });
-      })(i);
-      wrap.appendChild(btn);
-    }
-    wrap.addEventListener("mouseleave", function () { highlightStars(wrap, pendingFormStars); });
-  }
-
-  // ---------- AI OSHPAZ ----------
-  function bindAISection() {
-    var input = document.getElementById("aiInput");
-    var btn = document.getElementById("aiSubmitBtn");
-    var btnText = document.getElementById("aiSubmitText");
-    var spinner = document.getElementById("aiSpinner");
-    var responseBox = document.getElementById("aiResponse");
-
-    btn.addEventListener("click", function () {
-      var prompt = input.value.trim();
-      if (!prompt) {
-        input.focus();
+    sb.from("reviews").select("*, profiles(username, avatar_url)").eq("recipe_id", recipe.dbId).order("created_at", { ascending: false }).then(function (res) {
+      var reviews = res.data || [];
+      if (reviews.length === 0) {
+        list.innerHTML = '<div class="no-reviews">' + UI_TEXT[currentLang].noReviewsYet + '</div>';
         return;
       }
-
-      btn.disabled = true;
-      spinner.classList.add("active");
-      responseBox.classList.remove("show", "error");
-      responseBox.textContent = "";
-
-      RecipeAPI.askGemini(prompt, currentLang)
-        .then(function (text) {
-          responseBox.textContent = text;
-          responseBox.classList.add("show");
-        })
-        .catch(function (err) {
-          var msg = currentLang === "uz"
-            ? "Kechirasiz, AI bilan bog'lanib bo'lmadi. Birozdan keyin qayta urinib ko'ring."
-            : currentLang === "ru"
-            ? "Извините, не удалось связаться с AI. Попробуйте позже."
-            : "Sorry, could not reach the AI. Please try again later.";
-          responseBox.textContent = msg;
-          responseBox.classList.add("show", "error");
-        })
-        .finally(function () {
-          btn.disabled = false;
-          spinner.classList.remove("active");
-        });
+      list.innerHTML = reviews.map(function (rv) {
+        var name = (rv.profiles && rv.profiles.username) || "Foydalanuvchi";
+        return (
+          '<div class="review-card">' +
+            '<div class="review-card-head">' +
+              '<span class="review-card-name">' + escapeHtml(name) + '</span>' +
+            '</div>' +
+            '<div class="review-card-text">' + escapeHtml(rv.text) + '</div>' +
+          '</div>'
+        );
+      }).join("");
     });
   }
 
   function bindReviewForm() {
     document.getElementById("reviewSubmitBtn").addEventListener("click", function () {
-      var nameInput = document.getElementById("reviewName");
+      if (!currentUser) { window.location.href = "login.html"; return; }
+
       var textInput = document.getElementById("reviewText");
-      var name = nameInput.value.trim();
       var text = textInput.value.trim();
 
       if (!currentRecipeId) return;
-      if (!name || !text) {
-        showToast(currentLang === "uz" ? "Iltimos, ism va fikringizni yozing" : currentLang === "ru" ? "Пожалуйста, укажите имя и отзыв" : "Please enter your name and review");
+      var recipe = findRecipe(currentRecipeId);
+      if (!recipe || !recipe.fromDB) return;
+
+      if (!text) {
+        showToast(currentLang === "uz" ? "Iltimos, fikringizni yozing" : currentLang === "ru" ? "Пожалуйста, напишите отзыв" : "Please write your review");
         return;
       }
 
-      var stars = pendingFormStars || 5;
-      var review = { name: name, text: text, stars: stars };
-
-      if (!userReviews[currentRecipeId]) userReviews[currentRecipeId] = [];
-      userReviews[currentRecipeId].push(review);
-      localStorageSet("rd_reviews", JSON.stringify(userReviews));
-
-      nameInput.value = "";
-      textInput.value = "";
-      renderReviewFormStars();
-
-      var recipe = findRecipe(currentRecipeId);
-      renderReviews(recipe);
-      showToast(currentLang === "uz" ? "Fikringiz uchun rahmat! 🎉" : currentLang === "ru" ? "Спасибо за отзыв! 🎉" : "Thanks for your review! 🎉");
+      sb.from("reviews").insert({ recipe_id: recipe.dbId, user_id: currentUser.id, text: text }).then(function (res) {
+        if (res.error) {
+          showToast("Xato: " + res.error.message);
+          return;
+        }
+        textInput.value = "";
+        renderDbReviews(recipe);
+        showToast(currentLang === "uz" ? "Fikringiz uchun rahmat! 🎉" : currentLang === "ru" ? "Спасибо за отзыв! 🎉" : "Thanks for your review! 🎉");
+      });
     });
   }
 
@@ -635,6 +626,15 @@
     var div = document.createElement("div");
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  // ---------- NAVBAR SCROLL ----------
+  function bindNav() {
+    var nav = document.getElementById("navbar");
+    window.addEventListener("scroll", function () {
+      if (window.scrollY > 40) nav.classList.add("scrolled");
+      else nav.classList.remove("scrolled");
+    });
   }
 
   // ---------- TOAST ----------
