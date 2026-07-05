@@ -315,9 +315,9 @@ async function addRecipe(e) {
   if (selectedFile) {
     const fileExt = selectedFile.name.split(".").pop();
     const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-    const { error: uploadError } = await sb.storage.from("recipe-images").upload(fileName, selectedFile);
+    const { error: uploadError } = await sb.storage.from("RECIPE-IMAGE").upload(fileName, selectedFile);
     if (!uploadError) {
-      const { data: urlData } = sb.storage.from("recipe-images").getPublicUrl(fileName);
+      const { data: urlData } = sb.storage.from("RECIPE-IMAGE").getPublicUrl(fileName);
       imageUrl = urlData.publicUrl;
     } else {
       showToast("Rasm yuklashda xato: " + uploadError.message);
