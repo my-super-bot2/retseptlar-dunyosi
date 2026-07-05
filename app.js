@@ -574,7 +574,7 @@
     var list = document.getElementById("reviewsList");
     list.innerHTML = '<div class="spinner" style="width:24px;height:24px;"></div>';
 
-    sb.from("reviews").select("*, profiles(username, avatar_url)").eq("recipe_id", recipe.dbId).order("created_at", { ascending: false }).then(function (res) {
+    sb.from("reviews_with_profiles").select("*").eq("recipe_id", recipe.dbId).order("created_at", { ascending: false }).then(function (res) {
       var reviews = res.data || [];
       if (reviews.length === 0) {
         list.innerHTML = '<div class="no-reviews">' + UI_TEXT[currentLang].noReviewsYet + '</div>';
