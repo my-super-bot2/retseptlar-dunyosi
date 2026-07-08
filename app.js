@@ -476,7 +476,7 @@
     // Video ko'rsatish (faqat DB retseptlar uchun)
     var existingVideo = document.getElementById("detailVideo");
     if (existingVideo) existingVideo.remove();
-    if (r.fromDB && r.video_url) {
+    console.log("VIDEO URL:", r.video_url); if (r.fromDB && r.video_url) {
       var video = document.createElement("video");
       video.id = "detailVideo";
       video.src = r.video_url;
