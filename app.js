@@ -473,16 +473,35 @@
     document.getElementById("detailImg").src = r.image;
     document.getElementById("detailImg").alt = r.name[lang];
 
-    // Video ko'rsatish (faqat DB retseptlar uchun)
+    // Video tugmasi (faqat DB retseptlar uchun)
     var existingVideo = document.getElementById("detailVideo");
+    var existingVideoBtn = document.getElementById("detailVideoBtn");
     if (existingVideo) existingVideo.remove();
-    console.log("VIDEO URL:", r.video_url); if (r.fromDB && r.video_url) {
-      var video = document.createElement("video");
-      video.id = "detailVideo";
-      video.src = r.video_url;
-      video.controls = true;
-      video.style.cssText = "width:100%; max-height:480px; border-radius:8px; margin-top:12px; background:#000; display:block;";
-      document.getElementById("detailImg").parentElement.appendChild(video);
+    if (existingVideoBtn) existingVideoBtn.remove();
+
+    if (r.fromDB && r.video_url) {
+      var videoBtn = document.createElement("button");
+      videoBtn.id = "detailVideoBtn";
+      videoBtn.innerHTML = "🎬 Videoni ko'rish";
+      videoBtn.style.cssText = "margin-top:14px; padding:12px 24px; background:var(--tomato); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.95rem; cursor:pointer; display:block; width:100%;";
+      var videoUrl = r.video_url;
+      videoBtn.onclick = function() {
+        var existVid = document.getElementById("detailVideo");
+        if (existVid) {
+          existVid.remove();
+          videoBtn.innerHTML = "🎬 Videoni ko'rish";
+          return;
+        }
+        var vid = document.createElement("video");
+        vid.id = "detailVideo";
+        vid.src = videoUrl;
+        vid.controls = true;
+        vid.autoplay = true;
+        vid.style.cssText = "width:100%; max-height:500px; border-radius:8px; margin-top:12px; background:#000; display:block;";
+        videoBtn.parentElement.insertBefore(vid, videoBtn.nextSibling);
+        videoBtn.innerHTML = "✕ Videoni yopish";
+      };
+      document.getElementById("detailImg").parentElement.appendChild(videoBtn);
     }
     document.getElementById("detailFlagEmoji").textContent = r.flag;
 
