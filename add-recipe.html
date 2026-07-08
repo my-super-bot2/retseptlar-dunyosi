@@ -205,24 +205,40 @@
     </div>
 
     <div class="step-card">
-      <div class="step-label"><span class="step-num">2</span> Taom nomi</div>
+      <div class="step-label"><span class="step-num">2</span> Taom video (ixtiyoriy, max 15MB)</div>
+      <div id="videoUploadArea" class="image-drop" onclick="document.getElementById('videoInput').click()">
+        <div id="videoPlaceholder" class="image-drop-empty">
+          <div class="image-drop-icon">🎬</div>
+          <div class="image-drop-text">Videoni shu yerga bosing yoki tashlang</div>
+          <div class="image-drop-hint">MP4, MOV — maksimal 15MB</div>
+        </div>
+        <div id="videoPreview" style="display:none; position:relative; height:200px;">
+          <video id="previewVideo" style="width:100%; height:100%; object-fit:cover;" controls></video>
+          <div class="image-drop-change" onclick="event.stopPropagation()">↻ Almashtirish</div>
+        </div>
+        <input type="file" id="videoInput" accept="video/*" style="display:none;" onchange="previewVideo(this)">
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-label"><span class="step-num">3</span> Taom nomi</div>
       <input type="text" class="field-input" id="title" placeholder="Masalan: O'zbek palov" required>
     </div>
 
     <div class="step-card">
-      <div class="step-label"><span class="step-num">3</span> Qaysi mamlakat oshxonasi?</div>
+      <div class="step-label"><span class="step-num">4</span> Qaysi mamlakat oshxonasi?</div>
       <div class="country-grid" id="countryGrid"></div>
       <input type="hidden" id="country" value="uz">
     </div>
 
     <div class="step-card">
-      <div class="step-label"><span class="step-num">4</span> Kerakli masalliqlar</div>
+      <div class="step-label"><span class="step-num">5</span> Kerakli masalliqlar</div>
       <textarea class="field-textarea" id="ingredients" placeholder="Har bir masalliqni yangi qatorga yozing:&#10;1 kg mol go'shti&#10;2 ta piyoz&#10;500 gr guruch" required></textarea>
       <div class="field-hint">Har bir masalliq alohida qatorda bo'lsin</div>
     </div>
 
     <div class="step-card">
-      <div class="step-label"><span class="step-num">5</span> Tayyorlash bosqichlari</div>
+      <div class="step-label"><span class="step-num">6</span> Tayyorlash bosqichlari</div>
       <textarea class="field-textarea" id="steps" placeholder="Har bir bosqichni yangi qatorga yozing:&#10;Go'shtni mayda to'g'rang&#10;Piyozni qovuring&#10;Guruchni qo'shing" required style="min-height:180px;"></textarea>
       <div class="field-hint">Har bir bosqich alohida qatorda bo'lsin — avtomatik raqamlanadi</div>
     </div>
@@ -243,6 +259,22 @@ const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let selectedFile = null;
+let selectedVideo = null;
+
+function previewVideo(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 15 * 1024 * 1024) {
+    showToast("Video hajmi 15MB dan oshmasin!");
+    return;
+  }
+  selectedVideo = file;
+  const url = URL.createObjectURL(file);
+  document.getElementById("previewVideo").src = url;
+  document.getElementById("videoPreview").style.display = "block";
+  document.getElementById("videoPlaceholder").style.display = "none";
+  document.getElementById("videoUploadArea").classList.add("has-image");
+}
 let selectedCountry = "uz";
 
 const COUNTRIES = [
@@ -311,6 +343,7 @@ async function addRecipe(e) {
   if (!user) { window.location.href = "login.html"; return; }
 
   let imageUrl = null;
+  let videoUrl = null;
 
   if (selectedFile) {
     const fileExt = selectedFile.name.split(".").pop();
@@ -324,6 +357,18 @@ async function addRecipe(e) {
     }
   }
 
+  if (selectedVideo) {
+    const fileExt = selectedVideo.name.split(".").pop();
+    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+    const { error: uploadError } = await sb.storage.from("videos").upload(fileName, selectedVideo);
+    if (!uploadError) {
+      const { data: urlData } = sb.storage.from("videos").getPublicUrl(fileName);
+      videoUrl = urlData.publicUrl;
+    } else {
+      showToast("Video yuklashda xato: " + uploadError.message);
+    }
+  }
+
   const recipe = {
     user_id: user.id,
     title: document.getElementById("title").value,
@@ -331,6 +376,7 @@ async function addRecipe(e) {
     ingredients: document.getElementById("ingredients").value,
     steps: document.getElementById("steps").value,
     image_url: imageUrl,
+    video_url: videoUrl,
     rating_sum: 0,
     rating_count: 0
   };

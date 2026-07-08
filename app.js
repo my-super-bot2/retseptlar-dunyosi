@@ -119,6 +119,7 @@
           dbId: r.id,
           flag: COUNTRY_FLAGS[r.country] || "🌍",
           image: r.image_url || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80",
+          video_url: r.video_url || null,
           name: name,
           tagline: tagline,
           ingredients: { uz: ingredients, ru: ingredients, en: ingredients },
@@ -471,6 +472,18 @@
 
     document.getElementById("detailImg").src = r.image;
     document.getElementById("detailImg").alt = r.name[lang];
+
+    // Video ko'rsatish (faqat DB retseptlar uchun)
+    var existingVideo = document.getElementById("detailVideo");
+    if (existingVideo) existingVideo.remove();
+    if (r.fromDB && r.video_url) {
+      var video = document.createElement("video");
+      video.id = "detailVideo";
+      video.src = r.video_url;
+      video.controls = true;
+      video.style.cssText = "width:100%; max-height:480px; border-radius:8px; margin-top:12px; background:#000; display:block;";
+      document.getElementById("detailImg").parentElement.appendChild(video);
+    }
     document.getElementById("detailFlagEmoji").textContent = r.flag;
 
     var countryLabel = r.fromAPI ? (r.country || "—") : (COUNTRY_NAMES[r.country] ? COUNTRY_NAMES[r.country][lang] : (COUNTRY_LABELS_UZ[r.country] || "—"));
