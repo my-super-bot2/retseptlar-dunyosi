@@ -534,14 +534,16 @@
       followBtn.id = "followBtn";
       followBtn.style.cssText = "margin-top:14px; padding:10px 22px; border-radius:8px; font-weight:700; font-size:0.88rem; cursor:pointer; border:2px solid var(--saffron); background:transparent; color:var(--ink);";
 
-      // Obuna bo'lganmi tekshirish
+      var followText = { uz: "Kuzatish", ru: "Подписаться", en: "Follow" };
+      var followingText = { uz: "✓ Kuzatilmoqda", ru: "✓ Подписан", en: "✓ Following" };
+
       sb.from("follows").select("id").eq("follower_id", currentUser.id).eq("following_id", r.userId).single().then(function(res) {
         if (res.data) {
-          followBtn.innerHTML = "✓ Obunasiz";
+          followBtn.innerHTML = followingText[lang];
           followBtn.style.background = "var(--saffron)";
           followBtn.style.color = "white";
         } else {
-          followBtn.innerHTML = "➕ " + r.authorName + "ga obuna bo'lish";
+          followBtn.innerHTML = followText[lang];
         }
       });
 
@@ -549,20 +551,18 @@
         if (!currentUser) { window.location.href = "login.html"; return; }
         sb.from("follows").select("id").eq("follower_id", currentUser.id).eq("following_id", r.userId).single().then(function(res) {
           if (res.data) {
-            // Obunani bekor qilish
             sb.from("follows").delete().eq("follower_id", currentUser.id).eq("following_id", r.userId).then(function() {
-              followBtn.innerHTML = "➕ " + r.authorName + "ga obuna bo'lish";
+              followBtn.innerHTML = followText[lang];
               followBtn.style.background = "transparent";
               followBtn.style.color = "var(--ink)";
-              showToast("Obuna bekor qilindi");
+              showToast(lang === "uz" ? "Obuna bekor qilindi" : lang === "ru" ? "Подписка отменена" : "Unfollowed");
             });
           } else {
-            // Obuna bo'lish
             sb.from("follows").insert({ follower_id: currentUser.id, following_id: r.userId }).then(function() {
-              followBtn.innerHTML = "✓ Obunasiz";
+              followBtn.innerHTML = followingText[lang];
               followBtn.style.background = "var(--saffron)";
               followBtn.style.color = "white";
-              showToast(r.authorName + "ga obuna bo'ldingiz! 🎉");
+              showToast(lang === "uz" ? "Obuna bo'ldingiz! 🎉" : lang === "ru" ? "Вы подписались! 🎉" : "Following! 🎉");
             });
           }
         });

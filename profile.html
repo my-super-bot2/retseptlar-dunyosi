@@ -39,6 +39,14 @@
               <div class="profile-stat-value" id="recipeCount">0</div>
               <div class="profile-stat-label">Retsept</div>
             </div>
+            <div class="profile-stat">
+              <div class="profile-stat-value" id="followersCount">0</div>
+              <div class="profile-stat-label">Obunachilar</div>
+            </div>
+            <div class="profile-stat">
+              <div class="profile-stat-value" id="followingCount">0</div>
+              <div class="profile-stat-label">Obunalar</div>
+            </div>
           </div>
         </div>
         <div>
@@ -95,6 +103,12 @@ async function init() {
 
   const { count } = await sb.from("recipes").select("*", { count: "exact", head: true }).eq("user_id", user.id);
   document.getElementById("recipeCount").textContent = count || 0;
+
+  // Obunachilar va obunalar soni
+  const { count: followersCount } = await sb.from("follows").select("*", { count: "exact", head: true }).eq("following_id", user.id);
+  const { count: followingCount } = await sb.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", user.id);
+  document.getElementById("followersCount").textContent = followersCount || 0;
+  document.getElementById("followingCount").textContent = followingCount || 0;
 
   await loadMyRecipes();
 
