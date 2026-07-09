@@ -117,6 +117,7 @@
         return {
           id: "db-" + r.id,
           dbId: r.id,
+          userId: r.user_id,
           flag: COUNTRY_FLAGS[r.country] || "🌍",
           image: r.image_url || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80",
           video_url: r.video_url || null,
@@ -130,6 +131,8 @@
           country: r.country,
           rating_sum: r.rating_sum || 0,
           rating_count: r.rating_count || 0,
+          views: r.views || 0,
+          authorName: authorName,
           fromDB: true
         };
       });
@@ -201,7 +204,7 @@
             '<div class="recipe-card-name">' + r.name[currentLang] + dbBadge + '</div>' +
             '<div class="recipe-card-tagline">' + r.tagline[currentLang] + '</div>' +
             '<div class="recipe-card-footer">' +
-              '<span>' + timeLabel + '</span>' +
+              '<span>' + (r.fromDB ? '👁 ' + (r.views || 0) : timeLabel) + '</span>' +
               '<span class="recipe-card-stars">★ ' + avg + '</span>' +
             '</div>' +
           '</div>' +
@@ -441,6 +444,14 @@
     document.getElementById("detailView").classList.add("open");
     document.getElementById("navbar").classList.add("scrolled");
     window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+
+    // Ko'rishlar sonini oshirish (faqat DB retseptlar uchun)
+    var r = findRecipe(id);
+    if (r && r.fromDB) {
+      sb.from("recipes").update({ views: (r.views || 0) + 1 }).eq("id", r.dbId).then(function() {
+        r.views = (r.views || 0) + 1;
+      });
+    }
   }
 
   function closeDetail() {
@@ -513,6 +524,52 @@
     document.getElementById("detailTime").textContent = r.time != null ? r.time : "—";
     document.getElementById("detailServings").textContent = r.servings != null ? r.servings : "—";
     document.getElementById("detailDifficulty").textContent = r.difficulty[lang];
+
+    // Obuna tugmasi (faqat DB retseptlar uchun, o'z retsepti emas)
+    var existFollowBtn = document.getElementById("followBtn");
+    if (existFollowBtn) existFollowBtn.remove();
+
+    if (r.fromDB && currentUser && r.userId !== currentUser.id) {
+      var followBtn = document.createElement("button");
+      followBtn.id = "followBtn";
+      followBtn.style.cssText = "margin-top:14px; padding:10px 22px; border-radius:8px; font-weight:700; font-size:0.88rem; cursor:pointer; border:2px solid var(--saffron); background:transparent; color:var(--ink);";
+
+      // Obuna bo'lganmi tekshirish
+      sb.from("follows").select("id").eq("follower_id", currentUser.id).eq("following_id", r.userId).single().then(function(res) {
+        if (res.data) {
+          followBtn.innerHTML = "✓ Obunasiz";
+          followBtn.style.background = "var(--saffron)";
+          followBtn.style.color = "white";
+        } else {
+          followBtn.innerHTML = "➕ " + r.authorName + "ga obuna bo'lish";
+        }
+      });
+
+      followBtn.onclick = function() {
+        if (!currentUser) { window.location.href = "login.html"; return; }
+        sb.from("follows").select("id").eq("follower_id", currentUser.id).eq("following_id", r.userId).single().then(function(res) {
+          if (res.data) {
+            // Obunani bekor qilish
+            sb.from("follows").delete().eq("follower_id", currentUser.id).eq("following_id", r.userId).then(function() {
+              followBtn.innerHTML = "➕ " + r.authorName + "ga obuna bo'lish";
+              followBtn.style.background = "transparent";
+              followBtn.style.color = "var(--ink)";
+              showToast("Obuna bekor qilindi");
+            });
+          } else {
+            // Obuna bo'lish
+            sb.from("follows").insert({ follower_id: currentUser.id, following_id: r.userId }).then(function() {
+              followBtn.innerHTML = "✓ Obunasiz";
+              followBtn.style.background = "var(--saffron)";
+              followBtn.style.color = "white";
+              showToast(r.authorName + "ga obuna bo'ldingiz! 🎉");
+            });
+          }
+        });
+      };
+
+      document.getElementById("detailTagline").parentElement.insertBefore(followBtn, document.getElementById("detailTagline").nextSibling);
+    }
 
     document.getElementById("ingredientsList").innerHTML = r.ingredients[lang].map(function (ing) {
       return "<li>" + ing + "</li>";
