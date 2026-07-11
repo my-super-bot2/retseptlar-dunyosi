@@ -5,14 +5,61 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Profil — Retseptlar Dunyosi</title>
 <link rel="stylesheet" href="style.css">
+<style>
+.profile-recipe-card {
+  background: var(--paper);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(42,24,16,0.07);
+  box-shadow: var(--shadow-soft);
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.profile-recipe-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-deep); }
+.profile-recipe-card-img { position: relative; height: 180px; overflow: hidden; }
+.profile-recipe-card-img img { width: 100%; height: 100%; object-fit: cover; }
+.profile-recipe-card-overlay {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: linear-gradient(transparent, rgba(28,18,11,0.75));
+  padding: 12px;
+  display: flex; align-items: flex-end; justify-content: space-between;
+}
+.profile-recipe-card-views { color: white; font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+.profile-recipe-card-rating { color: var(--saffron); font-size: 0.75rem; font-weight: 700; }
+.profile-recipe-card-body { padding: 12px; }
+.profile-recipe-card-title { font-family: var(--font-display); font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+.delete-btn {
+  position: absolute; top: 8px; left: 8px; z-index: 5;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(196,67,47,0.85); color: white; border: none;
+  cursor: pointer; font-size: 0.78rem;
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.lang-switch-profile {
+  display: flex; gap: 6px; margin-left: auto;
+}
+.lang-btn-sm {
+  padding: 5px 12px; border-radius: 6px; font-size: 0.78rem; font-weight: 700;
+  border: 1px solid rgba(42,24,16,0.16); background: none; cursor: pointer;
+  color: rgba(42,24,16,0.6); font-family: var(--font-body);
+}
+.lang-btn-sm.active { background: var(--tomato); color: white; border-color: var(--tomato); }
+</style>
 </head>
 <body>
 
 <nav class="navbar">
   <a href="index.html" class="navbar-logo">Retseptlar <span>Dunyosi</span></a>
   <div class="navbar-actions">
-    <a href="add-recipe.html"><button class="nav-btn nav-btn-solid">+ Retsept</button></a>
-    <a href="index.html"><button class="nav-btn nav-btn-ghost">← Bosh sahifa</button></a>
+    <div class="lang-switch-profile">
+      <button class="lang-btn-sm active" onclick="setLang('uz', this)">UZ</button>
+      <button class="lang-btn-sm" onclick="setLang('ru', this)">RU</button>
+      <button class="lang-btn-sm" onclick="setLang('en', this)">EN</button>
+    </div>
+    <a href="add-recipe.html"><button class="nav-btn nav-btn-solid" id="addBtn">+ Retsept</button></a>
+    <a href="index.html"><button class="nav-btn nav-btn-ghost" id="homeBtn">← Bosh sahifa</button></a>
   </div>
 </nav>
 
@@ -37,40 +84,44 @@
           <div class="profile-stats">
             <div class="profile-stat">
               <div class="profile-stat-value" id="recipeCount">0</div>
-              <div class="profile-stat-label">Retsept</div>
+              <div class="profile-stat-label" id="lblRecipe">Retsept</div>
             </div>
             <div class="profile-stat">
               <div class="profile-stat-value" id="followersCount">0</div>
-              <div class="profile-stat-label">Obunachilar</div>
+              <div class="profile-stat-label" id="lblFollowers">Obunachilar</div>
             </div>
             <div class="profile-stat">
               <div class="profile-stat-value" id="followingCount">0</div>
-              <div class="profile-stat-label">Obunalar</div>
+              <div class="profile-stat-label" id="lblFollowing">Obunalar</div>
+            </div>
+            <div class="profile-stat">
+              <div class="profile-stat-value" id="totalViews">0</div>
+              <div class="profile-stat-label" id="lblViews">Ko'rishlar</div>
             </div>
           </div>
         </div>
         <div>
-          <button class="btn-secondary" onclick="document.getElementById('avatarInput').click()">📷 Rasm o'zgartirish</button>
+          <button class="btn-secondary" onclick="document.getElementById('avatarInput').click()" id="changePhotoBtn">📷 Rasm o'zgartirish</button>
           <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="uploadAvatar(this)">
         </div>
       </div>
 
       <div style="background:var(--paper); border-radius:var(--radius); padding:24px; margin-bottom:32px;">
-        <h3 style="font-family:var(--font-display); margin-bottom:18px;">Ma'lumotlarni tahrirlash</h3>
+        <h3 style="font-family:var(--font-display); margin-bottom:18px;" id="editTitle">Ma'lumotlarni tahrirlash</h3>
         <form id="editProfileForm" onsubmit="updateProfile(event)">
           <div class="form-group">
-            <label class="form-label">Foydalanuvchi nomi</label>
+            <label class="form-label" id="lblUsername">Foydalanuvchi nomi</label>
             <input type="text" class="form-input" id="editUsername" required>
           </div>
           <div class="form-group">
-            <label class="form-label">To'liq ism</label>
+            <label class="form-label" id="lblFullname">To'liq ism</label>
             <input type="text" class="form-input" id="editFullname" required>
           </div>
           <button type="submit" class="btn-primary" id="saveProfileBtn">✓ Saqlash</button>
         </form>
       </div>
 
-      <h3 style="font-family:var(--font-display); font-size:1.3rem; margin-bottom:18px;">Mening retseptlarim</h3>
+      <h3 style="font-family:var(--font-display); font-size:1.3rem; margin-bottom:18px;" id="myRecipesTitle">Mening retseptlarim</h3>
       <div id="myRecipesGrid" class="recipes-grid"></div>
 
     </div>
@@ -85,7 +136,80 @@ const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentUser = null;
+let currentLang = localStorage.getItem("lang") || "uz";
 const COUNTRY_FLAGS = {uz:"🇺🇿",it:"🇮🇹",jp:"🇯🇵",mx:"🇲🇽",fr:"🇫🇷",th:"🇹🇭",vn:"🇻🇳",ua:"🇺🇦",in:"🇮🇳",cn:"🇨🇳",kr:"🇰🇷",tr:"🇹🇷",es:"🇪🇸",de:"🇩🇪",us:"🇺🇸"};
+
+const T = {
+  uz: {
+    title: "Profil — Retseptlar Dunyosi",
+    recipe: "Retsept", followers: "Obunachilar", following: "Obunalar", views: "Ko'rishlar",
+    editTitle: "Ma'lumotlarni tahrirlash", username: "Foydalanuvchi nomi", fullname: "To'liq ism",
+    save: "✓ Saqlash", saving: "Saqlanmoqda...", myRecipes: "Mening retseptlarim",
+    noRecipes: "Hali retsept qo'shmagansiz", addRecipe: "+ Retsept qo'shish",
+    changePhoto: "📷 Rasm o'zgartirish", home: "← Bosh sahifa",
+    deleteConfirm: "Bu retseptni o'chirishni xohlaysizmi?",
+    deleted: "Retsept o'chirildi", updated: "Profil yangilandi! 🎉",
+    photoUpdated: "Rasm yangilandi! 🎉", error: "Xato: "
+  },
+  ru: {
+    title: "Профиль — Рецептлар Дунёси",
+    recipe: "Рецепт", followers: "Подписчики", following: "Подписки", views: "Просмотры",
+    editTitle: "Редактировать данные", username: "Имя пользователя", fullname: "Полное имя",
+    save: "✓ Сохранить", saving: "Сохраняется...", myRecipes: "Мои рецепты",
+    noRecipes: "Вы ещё не добавили рецепты", addRecipe: "+ Добавить рецепт",
+    changePhoto: "📷 Изменить фото", home: "← Главная",
+    deleteConfirm: "Удалить этот рецепт?",
+    deleted: "Рецепт удалён", updated: "Профиль обновлён! 🎉",
+    photoUpdated: "Фото обновлено! 🎉", error: "Ошибка: "
+  },
+  en: {
+    title: "Profile — Retseptlar Dunyosi",
+    recipe: "Recipes", followers: "Followers", following: "Following", views: "Views",
+    editTitle: "Edit Profile", username: "Username", fullname: "Full name",
+    save: "✓ Save", saving: "Saving...", myRecipes: "My Recipes",
+    noRecipes: "You haven't added any recipes yet", addRecipe: "+ Add Recipe",
+    changePhoto: "📷 Change Photo", home: "← Home",
+    deleteConfirm: "Delete this recipe?",
+    deleted: "Recipe deleted", updated: "Profile updated! 🎉",
+    photoUpdated: "Photo updated! 🎉", error: "Error: "
+  }
+};
+
+function setLang(lang, btn) {
+  currentLang = lang;
+  localStorage.setItem("lang", lang);
+  document.querySelectorAll(".lang-btn-sm").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  applyLang();
+}
+
+function applyLang() {
+  const t = T[currentLang];
+  document.title = t.title;
+  setText("lblRecipe", t.recipe);
+  setText("lblFollowers", t.followers);
+  setText("lblFollowing", t.following);
+  setText("lblViews", t.views);
+  setText("editTitle", t.editTitle);
+  setText("lblUsername", t.username);
+  setText("lblFullname", t.fullname);
+  setText("saveProfileBtn", t.save);
+  setText("myRecipesTitle", t.myRecipes);
+  setText("changePhotoBtn", t.changePhoto);
+  setText("homeBtn", t.home);
+  setText("addBtn", currentLang === "uz" ? "+ Retsept" : currentLang === "ru" ? "+ Рецепт" : "+ Recipe");
+}
+
+function setText(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
+
+// Lang btn active holati
+document.querySelectorAll(".lang-btn-sm").forEach(btn => {
+  if (btn.onclick.toString().includes(`'${currentLang}'`)) btn.classList.add("active");
+  else btn.classList.remove("active");
+});
 
 async function init() {
   const { data: { user } } = await sb.auth.getUser();
@@ -101,15 +225,21 @@ async function init() {
   document.getElementById("editUsername").value = profile?.username || "";
   document.getElementById("editFullname").value = profile?.full_name || "";
 
-  const { count } = await sb.from("recipes").select("*", { count: "exact", head: true }).eq("user_id", user.id);
-  document.getElementById("recipeCount").textContent = count || 0;
-
-  // Obunachilar va obunalar soni
+  // Statistika
+  const { count: recipeCount } = await sb.from("recipes").select("*", { count: "exact", head: true }).eq("user_id", user.id);
   const { count: followersCount } = await sb.from("follows").select("*", { count: "exact", head: true }).eq("following_id", user.id);
   const { count: followingCount } = await sb.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", user.id);
+  
+  // Umumiy ko'rishlar soni
+  const { data: viewsData } = await sb.from("recipes").select("views").eq("user_id", user.id);
+  const totalViews = (viewsData || []).reduce((sum, r) => sum + (r.views || 0), 0);
+
+  document.getElementById("recipeCount").textContent = recipeCount || 0;
   document.getElementById("followersCount").textContent = followersCount || 0;
   document.getElementById("followingCount").textContent = followingCount || 0;
+  document.getElementById("totalViews").textContent = totalViews;
 
+  applyLang();
   await loadMyRecipes();
 
   document.getElementById("profileLoading").style.display = "none";
@@ -119,13 +249,14 @@ async function init() {
 async function loadMyRecipes() {
   const grid = document.getElementById("myRecipesGrid");
   const { data: recipes, error } = await sb.from("recipes").select("*").eq("user_id", currentUser.id).order("created_at", { ascending: false });
+  const t = T[currentLang];
 
   if (error || !recipes || recipes.length === 0) {
     grid.innerHTML = `
       <div class="empty-state" style="grid-column:1/-1;">
-        <h3>Hali retsept qo'shmagansiz</h3>
+        <h3>${t.noRecipes}</h3>
         <a href="add-recipe.html" style="display:inline-block; margin-top:16px;">
-          <button class="btn-primary">+ Retsept qo'shish</button>
+          <button class="btn-primary">${t.addRecipe}</button>
         </a>
       </div>
     `;
@@ -137,19 +268,19 @@ async function loadMyRecipes() {
     const flag = COUNTRY_FLAGS[r.country] || "🌍";
     const avgRating = r.rating_count > 0 ? (r.rating_sum / r.rating_count).toFixed(1) : "—";
     return `
-      <div class="recipe-card" style="position:relative;">
-        <button onclick="event.stopPropagation(); deleteRecipe('${r.id}')" title="O'chirish" style="position:absolute; top:10px; left:10px; z-index:5; width:30px; height:30px; border-radius:50%; background:rgba(28,18,11,0.65); color:white; border:none; cursor:pointer; font-size:0.9rem; display:flex; align-items:center; justify-content:center;">🗑</button>
-        <div onclick="location.href='index.html?recipe=${r.id}'" style="cursor:pointer;">
-          <div class="recipe-card-img">
+      <div class="profile-recipe-card">
+        <button class="delete-btn" onclick="event.stopPropagation(); deleteRecipe('${r.id}')">🗑</button>
+        <div onclick="location.href='index.html?recipe=${r.id}'">
+          <div class="profile-recipe-card-img">
             <img src="${imageUrl}" alt="${r.title}" loading="lazy">
-            <div class="recipe-card-flag">${flag} ${r.country?.toUpperCase() || ""}</div>
-          </div>
-          <div class="recipe-card-body">
-            <div class="recipe-card-title">${r.title}</div>
-            <div class="recipe-card-footer">
-              <span>${new Date(r.created_at).toLocaleDateString("uz")}</span>
-              <span class="recipe-stars">★ ${avgRating}</span>
+            <div class="profile-recipe-card-overlay">
+              <span class="profile-recipe-card-views">👁 ${r.views || 0}</span>
+              <span class="profile-recipe-card-rating">★ ${avgRating}</span>
             </div>
+            <div style="position:absolute;top:8px;right:8px;background:white;padding:3px 8px;border-radius:4px;font-size:0.78rem;font-weight:700;">${flag}</div>
+          </div>
+          <div class="profile-recipe-card-body">
+            <div class="profile-recipe-card-title">${r.title}</div>
           </div>
         </div>
       </div>
@@ -158,14 +289,15 @@ async function loadMyRecipes() {
 }
 
 async function deleteRecipe(recipeId) {
-  if (!confirm("Bu retseptni o'chirishni xohlaysizmi? Bu amalni qaytarib bo'lmaydi.")) return;
+  const t = T[currentLang];
+  if (!confirm(t.deleteConfirm)) return;
 
   const { error } = await sb.from("recipes").delete().eq("id", recipeId).eq("user_id", currentUser.id);
 
   if (error) {
-    showToast("Xato: " + error.message);
+    showToast(t.error + error.message);
   } else {
-    showToast("Retsept o'chirildi");
+    showToast(t.deleted);
     await loadMyRecipes();
     const { count } = await sb.from("recipes").select("*", { count: "exact", head: true }).eq("user_id", currentUser.id);
     document.getElementById("recipeCount").textContent = count || 0;
@@ -174,9 +306,10 @@ async function deleteRecipe(recipeId) {
 
 async function updateProfile(e) {
   e.preventDefault();
+  const t = T[currentLang];
   const btn = document.getElementById("saveProfileBtn");
   btn.disabled = true;
-  btn.textContent = "Saqlanmoqda...";
+  btn.textContent = t.saving;
 
   const { error } = await sb.from("profiles").update({
     username: document.getElementById("editUsername").value,
@@ -184,17 +317,18 @@ async function updateProfile(e) {
   }).eq("id", currentUser.id);
 
   if (error) {
-    showToast("Xato: " + error.message);
+    showToast(t.error + error.message);
   } else {
-    showToast("Profil yangilandi! 🎉");
+    showToast(t.updated);
     document.getElementById("profileFullname").textContent = document.getElementById("editFullname").value;
     document.getElementById("profileUsername").textContent = "@" + document.getElementById("editUsername").value;
   }
   btn.disabled = false;
-  btn.textContent = "✓ Saqlash";
+  btn.textContent = t.save;
 }
 
 async function uploadAvatar(input) {
+  const t = T[currentLang];
   const file = input.files[0];
   if (!file) return;
 
@@ -202,29 +336,23 @@ async function uploadAvatar(input) {
   const fileName = `${currentUser.id}/avatar-${Date.now()}.${fileExt}`;
 
   const { error: uploadError } = await sb.storage.from("avatars").upload(fileName, file, { upsert: true });
-  if (uploadError) {
-    showToast("Rasm yuklashda xato: " + uploadError.message);
-    return;
-  }
+  if (uploadError) { showToast(t.error + uploadError.message); return; }
 
   const { data: urlData } = sb.storage.from("avatars").getPublicUrl(fileName);
   const avatarUrl = urlData.publicUrl;
 
   const { error: updateError } = await sb.from("profiles").update({ avatar_url: avatarUrl }).eq("id", currentUser.id);
-  if (updateError) {
-    showToast("Xato: " + updateError.message);
-    return;
-  }
+  if (updateError) { showToast(t.error + updateError.message); return; }
 
   document.getElementById("profileAvatar").src = avatarUrl;
-  showToast("Rasm yangilandi! 🎉");
+  showToast(t.photoUpdated);
 }
 
 function showToast(msg) {
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 3000);
+  const t2 = document.getElementById("toast");
+  t2.textContent = msg;
+  t2.classList.add("show");
+  setTimeout(() => t2.classList.remove("show"), 3000);
 }
 
 if (localStorage.getItem("theme") === "dark") document.body.classList.add("dark");

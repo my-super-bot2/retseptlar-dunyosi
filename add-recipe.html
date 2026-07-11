@@ -173,18 +173,25 @@
 
 <nav class="topbar">
   <a href="index.html" class="topbar-logo">Retseptlar <span>Dunyosi</span></a>
-  <a href="index.html" class="back-link">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-    Orqaga
-  </a>
+  <div style="display:flex; align-items:center; gap:14px;">
+    <div style="display:flex; gap:5px;">
+      <button onclick="setLang('uz',this)" class="lang-btn-ar active" style="padding:5px 10px; border-radius:6px; font-size:0.75rem; font-weight:700; border:1px solid rgba(42,24,16,0.16); background:var(--tomato); color:white; cursor:pointer;">UZ</button>
+      <button onclick="setLang('ru',this)" class="lang-btn-ar" style="padding:5px 10px; border-radius:6px; font-size:0.75rem; font-weight:700; border:1px solid rgba(42,24,16,0.16); background:none; color:var(--ink); cursor:pointer;">RU</button>
+      <button onclick="setLang('en',this)" class="lang-btn-ar" style="padding:5px 10px; border-radius:6px; font-size:0.75rem; font-weight:700; border:1px solid rgba(42,24,16,0.16); background:none; color:var(--ink); cursor:pointer;">EN</button>
+    </div>
+    <a href="index.html" class="back-link" id="backLink">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      <span id="backText">Orqaga</span>
+    </a>
+  </div>
 </nav>
 
 <div class="toast" id="toast"></div>
 
 <div class="wrap">
-  <div class="page-eyebrow">Yangi retsept</div>
-  <h1 class="page-title">O'z taomingizni <em style="font-style:italic; color:var(--saffron);">dunyo bilan ulashing</em></h1>
-  <p class="page-subtitle">Bir necha qadamda retseptingizni qo'shing — minglab odam undan ilhom olsin</p>
+  <div class="page-eyebrow" id="eyebrow">Yangi retsept</div>
+  <h1 class="page-title" id="pageTitle">O'z taomingizni <em style="font-style:italic; color:var(--saffron);">dunyo bilan ulashing</em></h1>
+  <p class="page-subtitle" id="pageSubtitle">Bir necha qadamda retseptingizni qo'shing — minglab odam undan ilhom olsin</p>
 
   <form id="recipeForm" onsubmit="addRecipe(event)">
 
