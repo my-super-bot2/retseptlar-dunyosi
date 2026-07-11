@@ -393,6 +393,16 @@ function setText(id, text) {
 // Sahifa yuklanganda til qo'llash
 applyLang();
 
+// Lang tugmalarini to'g'ri active qilish
+document.querySelectorAll(".lang-btn-ar").forEach(function(btn) {
+  btn.style.background = "none";
+  btn.style.color = "var(--ink)";
+  if (btn.getAttribute("onclick") && btn.getAttribute("onclick").includes("'" + currentLang + "'")) {
+    btn.style.background = "var(--tomato)";
+    btn.style.color = "white";
+  }
+});
+
 function previewVideo(input) {
   const t = T[currentLang];
   const file = input.files[0];

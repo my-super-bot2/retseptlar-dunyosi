@@ -423,6 +423,26 @@
     setText("detailTimeLabel", lang === "uz" ? "Daqiqa" : lang === "ru" ? "Минут" : "Minutes");
     setText("detailServingsLabel", t.servings.charAt(0).toUpperCase() + t.servings.slice(1));
     setText("detailDifficultyLabel", t.difficulty);
+
+    // + Retsept tugmasi
+    var addBtn = document.querySelector("#addRecipeBtn button");
+    if (addBtn) addBtn.textContent = lang === "uz" ? "+ Retsept qo'shish" : lang === "ru" ? "+ Добавить рецепт" : "+ Add Recipe";
+
+    // Navbar auth matnlari
+    var profileBtn = document.querySelector("#authDropdown button:first-child");
+    var signOutBtn = document.querySelector("#authDropdown button:last-child");
+    if (profileBtn) profileBtn.innerHTML = lang === "uz" ? "👤 Profil" : lang === "ru" ? "👤 Профиль" : "👤 Profile";
+    if (signOutBtn) signOutBtn.innerHTML = lang === "uz" ? "🚪 Chiqish" : lang === "ru" ? "🚪 Выйти" : "🚪 Sign out";
+
+    // Kirish/Ro'yxatdan o'tish tugmalari (login qilmagan holda)
+    var loginBtns = document.querySelectorAll("#authArea a button");
+    if (loginBtns.length === 2) {
+      loginBtns[0].textContent = lang === "uz" ? "Kirish" : lang === "ru" ? "Войти" : "Sign in";
+      loginBtns[1].textContent = lang === "uz" ? "Ro'yxatdan o'tish" : lang === "ru" ? "Регистрация" : "Sign up";
+    }
+
+    // localStorage'ga til saqlash
+    localStorage.setItem("lang", lang);
   }
 
   function formatHeroTitle(lang) {
