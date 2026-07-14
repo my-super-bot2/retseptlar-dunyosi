@@ -196,12 +196,31 @@ var RecipeAPI = (function () {
     return AREA_FLAGS[area] || "🌍";
   }
 
+  // ---------- Gemini AI Oshpaz (xavfsiz, Netlify Function orqali) ----------
+  // Bu funksiya kalitni o'zida saqlamaydi — barchasi serverda (Netlify
+  // Function) ishlaydi, brauzerda faqat savol va javob ko'chadi.
+  function askGemini(prompt, lang) {
+    return fetch("/.netlify/functions/gemini-chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: prompt, lang: lang })
+    })
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        return data.text;
+      });
+  }
+
   // ---------- Tashqi API ----------
   return {
     searchMealDB: searchMealDB,
     lookupMeal: lookupMeal,
     translateText: translateText,
-    buildLocalizedRecipe: buildLocalizedRecipe
+    buildLocalizedRecipe: buildLocalizedRecipe,
+    askGemini: askGemini
   };
 
 })();

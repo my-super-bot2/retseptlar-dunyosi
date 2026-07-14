@@ -71,6 +71,21 @@
 
   function renderAuthLoggedIn() {
     document.getElementById("addRecipeBtn").style.display = "inline-block";
+
+    // Notification belgisini ko'rsatish
+    var notifLink = document.getElementById("notifLink");
+    if (notifLink) notifLink.style.display = "block";
+
+    // O'qilmagan notificationlar sonini olish
+    sb.from("notifications").select("id", { count: "exact" }).eq("user_id", currentUser.id).eq("is_read", false).then(function(res) {
+      var count = res.count || 0;
+      var badge = document.getElementById("notifBadge");
+      if (badge && count > 0) {
+        badge.style.display = "flex";
+        badge.textContent = count > 9 ? "9+" : count;
+      }
+    });
+
     var avatarUrl = (currentProfile && currentProfile.avatar_url) || ("https://api.dicebear.com/7.x/initials/svg?seed=" + ((currentProfile && currentProfile.username) || "U"));
     document.getElementById("authArea").innerHTML =
       '<div style="position:relative;">' +
@@ -79,6 +94,7 @@
         '</div>' +
         '<div id="authDropdown" style="position:absolute;top:calc(100% + 8px);right:0;background:var(--cream);border-radius:8px;box-shadow:0 8px 32px rgba(28,18,11,0.18);border:1px solid rgba(42,24,16,0.08);min-width:170px;overflow:hidden;display:none;z-index:200;">' +
           '<button onclick="location.href=\'profile.html\'" style="display:flex;align-items:center;gap:8px;padding:12px 16px;font-size:0.86rem;width:100%;text-align:left;border:none;background:none;cursor:pointer;color:var(--ink);font-family:var(--font-body);">👤 Profil</button>' +
+          '<button onclick="location.href=\'notifications.html\'" style="display:flex;align-items:center;gap:8px;padding:12px 16px;font-size:0.86rem;width:100%;text-align:left;border:none;background:none;cursor:pointer;color:var(--ink);font-family:var(--font-body);">🔔 Bildirishnomalar</button>' +
           '<button onclick="window.__signOut()" style="display:flex;align-items:center;gap:8px;padding:12px 16px;font-size:0.86rem;width:100%;text-align:left;border:none;background:none;cursor:pointer;color:var(--tomato);font-family:var(--font-body);">🚪 Chiqish</button>' +
         '</div>' +
       '</div>';
@@ -132,6 +148,7 @@
           rating_sum: r.rating_sum || 0,
           rating_count: r.rating_count || 0,
           views: r.views || 0,
+          likes_count: r.likes_count || 0,
           authorName: authorName,
           fromDB: true
         };
@@ -599,17 +616,72 @@
       return "<li><span>" + step + "</span></li>";
     }).join("");
 
+    // Like tugmasi (faqat DB retseptlar uchun)
+    var existLikeBtn = document.getElementById("likeBtn");
+    if (existLikeBtn) existLikeBtn.remove();
+
+    if (r.fromDB) {
+      var likeBtn = document.createElement("button");
+      likeBtn.id = "likeBtn";
+      likeBtn.style.cssText = "margin-top:10px; margin-right:10px; padding:10px 20px; border-radius:8px; font-weight:700; font-size:0.88rem; cursor:pointer; border:2px solid rgba(42,24,16,0.16); background:transparent; color:var(--ink); display:inline-flex; align-items:center; gap:8px;";
+      likeBtn.innerHTML = "🤍 " + (r.likes_count || 0);
+
+      if (currentUser) {
+        sb.from("likes").select("id").eq("recipe_id", r.dbId).eq("user_id", currentUser.id).single().then(function(res) {
+          if (res.data) {
+            likeBtn.innerHTML = "❤️ " + (r.likes_count || 0);
+            likeBtn.style.borderColor = "var(--tomato)";
+            likeBtn.style.color = "var(--tomato)";
+          }
+        });
+      }
+
+      var likeCount = r.likes_count || 0;
+      likeBtn.onclick = function() {
+        if (!currentUser) { window.location.href = "login.html"; return; }
+        sb.from("likes").select("id").eq("recipe_id", r.dbId).eq("user_id", currentUser.id).single().then(function(res) {
+          if (res.data) {
+            sb.from("likes").delete().eq("recipe_id", r.dbId).eq("user_id", currentUser.id).then(function() {
+              likeCount = Math.max(0, likeCount - 1);
+              r.likes_count = likeCount;
+              sb.from("recipes").update({ likes_count: likeCount }).eq("id", r.dbId).then(function(){});
+              likeBtn.innerHTML = "🤍 " + likeCount;
+              likeBtn.style.borderColor = "rgba(42,24,16,0.16)";
+              likeBtn.style.color = "var(--ink)";
+            });
+          } else {
+            sb.from("likes").insert({ recipe_id: r.dbId, user_id: currentUser.id }).then(function() {
+              likeCount = likeCount + 1;
+              r.likes_count = likeCount;
+              sb.from("recipes").update({ likes_count: likeCount }).eq("id", r.dbId).then(function(){});
+              likeBtn.innerHTML = "❤️ " + likeCount;
+              likeBtn.style.borderColor = "var(--tomato)";
+              likeBtn.style.color = "var(--tomato)";
+              if (r.userId !== currentUser.id) {
+                sb.from("notifications").insert({
+                  user_id: r.userId,
+                  from_user_id: currentUser.id,
+                  type: "like",
+                  recipe_id: r.dbId
+                }).then(function(){});
+              }
+            });
+          }
+        });
+      };
+
+      document.getElementById("detailTagline").parentElement.insertBefore(likeBtn, document.getElementById("detailTagline").nextSibling);
+    }
+
     var ratingBlock = document.getElementById("ratingBlock");
     var reviewForm = document.getElementById("reviewFormWrap");
 
     if (r.fromDB) {
-      // Faqat foydalanuvchi qo'shgan retseptlarga baho/komment qo'yish mumkin
       ratingBlock.style.display = "";
       reviewForm.style.display = "";
       renderDbStars(r);
       renderDbReviews(r);
     } else {
-      // Mahalliy va API retseptlarga baho/komment yopiq
       ratingBlock.style.display = "none";
       reviewForm.style.display = "none";
       document.getElementById("reviewsList").innerHTML = '<div class="no-reviews">' + (lang === "uz" ? "Bu retsept uchun fikrlar mavjud emas" : lang === "ru" ? "Отзывы недоступны для этого рецепта" : "Reviews unavailable for this recipe") + '</div>';

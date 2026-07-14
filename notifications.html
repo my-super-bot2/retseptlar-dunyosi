@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bildirishnomalar — Retseptlar Dunyosi</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.notif-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: var(--paper);
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid rgba(42,24,16,0.06);
+}
+.notif-item:hover { transform: translateX(4px); }
+.notif-item.unread { background: rgba(232,163,61,0.08); border-color: rgba(232,163,61,0.3); }
+.notif-avatar {
+  width: 44px; height: 44px;
+  border-radius: 50%; object-fit: cover;
+  border: 2px solid var(--paper);
+  flex-shrink: 0;
+}
+.notif-icon {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; flex-shrink: 0;
+}
+.notif-icon.like { background: rgba(196,67,47,0.12); }
+.notif-icon.follow { background: rgba(232,163,61,0.12); }
+.notif-icon.comment { background: rgba(92,122,79,0.12); }
+.notif-text { flex: 1; }
+.notif-text strong { font-weight: 700; }
+.notif-time { font-size: 0.75rem; color: rgba(42,24,16,0.45); margin-top: 2px; }
+.notif-unread-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%; background: var(--tomato);
+  flex-shrink: 0;
+}
+.mark-read-btn {
+  padding: 8px 18px; border-radius: 8px;
+  border: 1px solid rgba(42,24,16,0.14);
+  background: var(--paper); color: var(--ink);
+  font-size: 0.82rem; font-weight: 600; cursor: pointer;
+  font-family: var(--font-body);
+}
+.mark-read-btn:hover { background: var(--cream); }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="navbar-logo">Retseptlar <span>Dunyosi</span></a>
+  <div class="navbar-actions">
+    <div style="display:flex; gap:5px;">
+      <button onclick="setLang('uz',this)" class="lang-btn-n" style="padding:5px 10px;border-radius:6px;font-size:0.75rem;font-weight:700;border:1px solid rgba(42,24,16,0.16);background:var(--tomato);color:white;cursor:pointer;">UZ</button>
+      <button onclick="setLang('ru',this)" class="lang-btn-n" style="padding:5px 10px;border-radius:6px;font-size:0.75rem;font-weight:700;border:1px solid rgba(42,24,16,0.16);background:none;color:var(--ink);cursor:pointer;">RU</button>
+      <button onclick="setLang('en',this)" class="lang-btn-n" style="padding:5px 10px;border-radius:6px;font-size:0.75rem;font-weight:700;border:1px solid rgba(42,24,16,0.16);background:none;color:var(--ink);cursor:pointer;">EN</button>
+    </div>
+    <a href="index.html"><button class="nav-btn nav-btn-ghost" id="backBtn">← Orqaga</button></a>
+  </div>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<div class="page">
+  <div class="container" style="max-width:680px; padding-top:40px; padding-bottom:60px;">
+
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+      <h1 style="font-family:var(--font-display); font-size:1.8rem;" id="pageTitle">🔔 Bildirishnomalar</h1>
+      <button class="mark-read-btn" id="markAllBtn" onclick="markAllRead()">Hammasini o'qildi deb belgilash</button>
+    </div>
+
+    <div id="notifLoading" style="text-align:center; padding:40px;">
+      <div class="spinner"></div>
+    </div>
+
+    <div id="notifList" style="display:none;"></div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://djpdfvngatsbfrenfzah.supabase.co";
+const SUPABASE_KEY = "sb_publishable_8fhNqJTTa7mCre0IBCuY8Q_2_K4rCE1";
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentLang = localStorage.getItem("lang") || "uz";
+let currentUser = null;
+
+const T = {
+  uz: {
+    title: "🔔 Bildirishnomalar",
+    back: "← Orqaga",
+    markAll: "Hammasini o'qildi deb belgilash",
+    empty: "Hozircha bildirishnoma yo'q",
+    like: " sizning retseptingizni yoqtirdi",
+    follow: " sizga obuna bo'ldi",
+    comment: " fikr qoldirdi",
+    justNow: "Hozirgina",
+    minutesAgo: " daqiqa oldin",
+    hoursAgo: " soat oldin",
+    daysAgo: " kun oldin"
+  },
+  ru: {
+    title: "🔔 Уведомления",
+    back: "← Назад",
+    markAll: "Отметить все как прочитанные",
+    empty: "Уведомлений пока нет",
+    like: " понравился ваш рецепт",
+    follow: " подписался на вас",
+    comment: " оставил комментарий",
+    justNow: "Только что",
+    minutesAgo: " мин назад",
+    hoursAgo: " ч назад",
+    daysAgo: " дн назад"
+  },
+  en: {
+    title: "🔔 Notifications",
+    back: "← Back",
+    markAll: "Mark all as read",
+    empty: "No notifications yet",
+    like: " liked your recipe",
+    follow: " followed you",
+    comment: " left a comment",
+    justNow: "Just now",
+    minutesAgo: " min ago",
+    hoursAgo: "h ago",
+    daysAgo: "d ago"
+  }
+};
+
+function setLang(lang, btn) {
+  currentLang = lang;
+  localStorage.setItem("lang", lang);
+  document.querySelectorAll(".lang-btn-n").forEach(b => { b.style.background = "none"; b.style.color = "var(--ink)"; });
+  btn.style.background = "var(--tomato)";
+  btn.style.color = "white";
+  applyLang();
+  loadNotifications();
+}
+
+function applyLang() {
+  const t = T[currentLang];
+  document.getElementById("pageTitle").textContent = t.title;
+  document.getElementById("backBtn").textContent = t.back;
+  document.getElementById("markAllBtn").textContent = t.markAll;
+}
+
+function timeAgo(dateStr) {
+  const t = T[currentLang];
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+  if (diff < 60) return t.justNow;
+  if (diff < 3600) return Math.floor(diff/60) + t.minutesAgo;
+  if (diff < 86400) return Math.floor(diff/3600) + t.hoursAgo;
+  return Math.floor(diff/86400) + t.daysAgo;
+}
+
+async function loadNotifications() {
+  const list = document.getElementById("notifList");
+  const loading = document.getElementById("notifLoading");
+  const t = T[currentLang];
+
+  const { data: notifs, error } = await sb.from("notifications")
+    .select("*, from_profile:profiles!notifications_from_user_id_fkey(username, avatar_url), recipe:recipes(title)")
+    .eq("user_id", currentUser.id)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  loading.style.display = "none";
+  list.style.display = "block";
+
+  if (error || !notifs || notifs.length === 0) {
+    list.innerHTML = `<div class="empty-state"><h3>${t.empty}</h3></div>`;
+    return;
+  }
+
+  list.innerHTML = notifs.map(n => {
+    const profile = n.from_profile;
+    const avatarUrl = profile?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${profile?.username || "U"}`;
+    const username = profile?.username || "Foydalanuvchi";
+    const recipeTitle = n.recipe?.title || "";
+
+    let iconClass = n.type;
+    let icon = n.type === "like" ? "❤️" : n.type === "follow" ? "👤" : "💬";
+    let text = `<strong>${username}</strong>${t[n.type] || ""}`;
+    if (recipeTitle && n.type !== "follow") text += ` <em>"${recipeTitle}"</em>`;
+
+    const link = n.recipe_id ? `index.html?recipe=${n.recipe_id}` : "index.html";
+
+    return `
+      <div class="notif-item ${!n.is_read ? 'unread' : ''}" onclick="markRead('${n.id}', '${link}')">
+        <div class="notif-icon ${iconClass}">${icon}</div>
+        <img class="notif-avatar" src="${avatarUrl}" alt="">
+        <div class="notif-text">
+          <div>${text}</div>
+          <div class="notif-time">${timeAgo(n.created_at)}</div>
+        </div>
+        ${!n.is_read ? '<div class="notif-unread-dot"></div>' : ''}
+      </div>
+    `;
+  }).join("");
+}
+
+async function markRead(id, link) {
+  await sb.from("notifications").update({ is_read: true }).eq("id", id);
+  window.location.href = link;
+}
+
+async function markAllRead() {
+  await sb.from("notifications").update({ is_read: true }).eq("user_id", currentUser.id);
+  showToast(currentLang === "uz" ? "Hammasi o'qildi!" : currentLang === "ru" ? "Все прочитано!" : "All read!");
+  await loadNotifications();
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3000);
+}
+
+async function init() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) { window.location.href = "login.html"; return; }
+  currentUser = user;
+  applyLang();
+  await loadNotifications();
+}
+
+// Lang tugmalarini to'g'ri active qilish
+document.querySelectorAll(".lang-btn-n").forEach(btn => {
+  if (btn.getAttribute("onclick") && btn.getAttribute("onclick").includes("'" + currentLang + "'")) {
+    btn.style.background = "var(--tomato)";
+    btn.style.color = "white";
+  } else {
+    btn.style.background = "none";
+    btn.style.color = "var(--ink)";
+  }
+});
+
+if (localStorage.getItem("theme") === "dark") document.body.classList.add("dark");
+
+init();
+</script>
+</body>
+</html>

@@ -173,35 +173,28 @@
 
 <nav class="topbar">
   <a href="index.html" class="topbar-logo">Retseptlar <span>Dunyosi</span></a>
-  <div style="display:flex; align-items:center; gap:14px;">
-    <div style="display:flex; gap:5px;">
-      <button onclick="setLang('uz',this)" class="lang-btn-ar active" style="padding:5px 10px; border-radius:6px; font-size:0.75rem; font-weight:700; border:1px solid rgba(42,24,16,0.16); background:var(--tomato); color:white; cursor:pointer;">UZ</button>
-      <button onclick="setLang('ru',this)" class="lang-btn-ar" style="padding:5px 10px; border-radius:6px; font-size:0.75rem; font-weight:700; border:1px solid rgba(42,24,16,0.16); background:none; color:var(--ink); cursor:pointer;">RU</button>
-      <button onclick="setLang('en',this)" class="lang-btn-ar" style="padding:5px 10px; border-radius:6px; font-size:0.75rem; font-weight:700; border:1px solid rgba(42,24,16,0.16); background:none; color:var(--ink); cursor:pointer;">EN</button>
-    </div>
-    <a href="index.html" class="back-link" id="backLink">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-      <span id="backText">Orqaga</span>
-    </a>
-  </div>
+  <a href="index.html" class="back-link">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+    Orqaga
+  </a>
 </nav>
 
 <div class="toast" id="toast"></div>
 
 <div class="wrap">
-  <div class="page-eyebrow" id="eyebrow">Yangi retsept</div>
-  <h1 class="page-title" id="pageTitle">O'z taomingizni <em style="font-style:italic; color:var(--saffron);">dunyo bilan ulashing</em></h1>
-  <p class="page-subtitle" id="pageSubtitle">Bir necha qadamda retseptingizni qo'shing — minglab odam undan ilhom olsin</p>
+  <div class="page-eyebrow">Yangi retsept</div>
+  <h1 class="page-title">O'z taomingizni <em style="font-style:italic; color:var(--saffron);">dunyo bilan ulashing</em></h1>
+  <p class="page-subtitle">Bir necha qadamda retseptingizni qo'shing — minglab odam undan ilhom olsin</p>
 
   <form id="recipeForm" onsubmit="addRecipe(event)">
 
     <div class="step-card">
-      <div class="step-label"><span class="step-num">1</span> <span id="step1Label">Taom rasmi</span></div>
+      <div class="step-label"><span class="step-num">1</span> Taom rasmi</div>
       <div id="imageUploadArea" class="image-drop" onclick="document.getElementById('imageInput').click()">
         <div id="uploadPlaceholder" class="image-drop-empty">
           <div class="image-drop-icon">📸</div>
-          <div class="image-drop-text" id="imgDropText">Rasmni shu yerga bosing yoki tashlang</div>
-          <div class="image-drop-hint" id="imgDropHint">JPG yoki PNG — maksimal 5MB</div>
+          <div class="image-drop-text">Rasmni shu yerga bosing yoki tashlang</div>
+          <div class="image-drop-hint">JPG yoki PNG — maksimal 5MB</div>
         </div>
         <div id="imagePreview" class="image-drop-preview" style="display:none;">
           <img id="previewImg" src="">
@@ -212,46 +205,30 @@
     </div>
 
     <div class="step-card">
-      <div class="step-label"><span class="step-num">2</span> <span id="step2Label">Taom video (ixtiyoriy, max 15MB)</span></div>
-      <div id="videoUploadArea" class="image-drop" onclick="document.getElementById('videoInput').click()">
-        <div id="videoPlaceholder" class="image-drop-empty">
-          <div class="image-drop-icon">🎬</div>
-          <div class="image-drop-text" id="vidDropText">Videoni shu yerga bosing yoki tashlang</div>
-          <div class="image-drop-hint" id="vidDropHint">MP4, MOV — maksimal 15MB</div>
-        </div>
-        <div id="videoPreview" style="display:none; position:relative; height:200px;">
-          <video id="previewVideo" style="width:100%; height:100%; object-fit:cover;" controls></video>
-          <div class="image-drop-change" onclick="event.stopPropagation()">↻ Almashtirish</div>
-        </div>
-        <input type="file" id="videoInput" accept="video/*" style="display:none;" onchange="previewVideo(this)">
-      </div>
-    </div>
-
-    <div class="step-card">
-      <div class="step-label"><span class="step-num">3</span> <span id="step3Label">Taom nomi</span></div>
+      <div class="step-label"><span class="step-num">2</span> Taom nomi</div>
       <input type="text" class="field-input" id="title" placeholder="Masalan: O'zbek palov" required>
     </div>
 
     <div class="step-card">
-      <div class="step-label"><span class="step-num">4</span> <span id="step4Label">Qaysi mamlakat oshxonasi?</span></div>
+      <div class="step-label"><span class="step-num">3</span> Qaysi mamlakat oshxonasi?</div>
       <div class="country-grid" id="countryGrid"></div>
       <input type="hidden" id="country" value="uz">
     </div>
 
     <div class="step-card">
-      <div class="step-label"><span class="step-num">5</span> <span id="step5Label">Kerakli masalliqlar</span></div>
+      <div class="step-label"><span class="step-num">4</span> Kerakli masalliqlar</div>
       <textarea class="field-textarea" id="ingredients" placeholder="Har bir masalliqni yangi qatorga yozing:&#10;1 kg mol go'shti&#10;2 ta piyoz&#10;500 gr guruch" required></textarea>
-      <div class="field-hint" id="ingHint">Har bir masalliq alohida qatorda bo'lsin</div>
+      <div class="field-hint">Har bir masalliq alohida qatorda bo'lsin</div>
     </div>
 
     <div class="step-card">
-      <div class="step-label"><span class="step-num">6</span> <span id="step6Label">Tayyorlash bosqichlari</span></div>
+      <div class="step-label"><span class="step-num">5</span> Tayyorlash bosqichlari</div>
       <textarea class="field-textarea" id="steps" placeholder="Har bir bosqichni yangi qatorga yozing:&#10;Go'shtni mayda to'g'rang&#10;Piyozni qovuring&#10;Guruchni qo'shing" required style="min-height:180px;"></textarea>
-      <div class="field-hint" id="stepsHint">Har bir bosqich alohida qatorda bo'lsin — avtomatik raqamlanadi</div>
+      <div class="field-hint">Har bir bosqich alohida qatorda bo'lsin — avtomatik raqamlanadi</div>
     </div>
 
     <div class="submit-bar">
-      <a href="index.html"><button type="button" class="btn-cancel" id="cancelBtn">Bekor qilish</button></a>
+      <a href="index.html"><button type="button" class="btn-cancel">Bekor qilish</button></a>
       <button type="submit" class="btn-submit" id="submitBtn">✓ Retseptni nashr qilish</button>
     </div>
 
@@ -265,159 +242,7 @@ const SUPABASE_KEY = "sb_publishable_8fhNqJTTa7mCre0IBCuY8Q_2_K4rCE1";
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let currentLang = localStorage.getItem("lang") || "uz";
-
-const T = {
-  uz: {
-    eyebrow: "Yangi retsept",
-    title: "O'z taomingizni <em style='font-style:italic;color:var(--saffron);'>dunyo bilan ulashing</em>",
-    subtitle: "Bir necha qadamda retseptingizni qo'shing — minglab odam undan ilhom olsin",
-    back: "Orqaga",
-    step1: "Taom rasmi",
-    step2: "Taom video (ixtiyoriy, max 15MB)",
-    step3: "Taom nomi",
-    step4: "Qaysi mamlakat oshxonasi?",
-    step5: "Kerakli masalliqlar",
-    step6: "Tayyorlash bosqichlari",
-    imgText: "Rasmni shu yerga bosing yoki tashlang",
-    imgHint: "JPG yoki PNG — maksimal 5MB",
-    vidText: "Videoni shu yerga bosing yoki tashlang",
-    vidHint: "MP4, MOV — maksimal 15MB",
-    titlePlaceholder: "Masalan: O'zbek palov",
-    ingPlaceholder: "Har bir masalliqni yangi qatorga yozing:\n1 kg mol go'shti\n2 ta piyoz\n500 gr guruch",
-    ingHint: "Har bir masalliq alohida qatorda bo'lsin",
-    stepsPlaceholder: "Har bir bosqichni yangi qatorga yozing:\nGo'shtni mayda to'g'rang\nPiyozni qovuring\nGuruchni qo'shing",
-    stepsHint: "Har bir bosqich alohida qatorda bo'lsin — avtomatik raqamlanadi",
-    cancel: "Bekor qilish",
-    submit: "✓ Retseptni nashr qilish",
-    saving: "Saqlanmoqda...",
-    success: "Retsept muvaffaqiyatli qo'shildi! 🎉",
-    videoSize: "Video hajmi 15MB dan oshmasin!"
-  },
-  ru: {
-    eyebrow: "Новый рецепт",
-    title: "Поделитесь своим блюдом <em style='font-style:italic;color:var(--saffron);'>с миром</em>",
-    subtitle: "Добавьте рецепт за несколько шагов — тысячи людей получат вдохновение",
-    back: "Назад",
-    step1: "Фото блюда",
-    step2: "Видео блюда (необязательно, макс 15МБ)",
-    step3: "Название блюда",
-    step4: "Кухня какой страны?",
-    step5: "Необходимые ингредиенты",
-    step6: "Шаги приготовления",
-    imgText: "Нажмите или перетащите фото сюда",
-    imgHint: "JPG или PNG — максимум 5МБ",
-    vidText: "Нажмите или перетащите видео сюда",
-    vidHint: "MP4, MOV — максимум 15МБ",
-    titlePlaceholder: "Например: Узбекский плов",
-    ingPlaceholder: "Каждый ингредиент с новой строки:\n1 кг говядины\n2 луковицы\n500 г риса",
-    ingHint: "Каждый ингредиент на отдельной строке",
-    stepsPlaceholder: "Каждый шаг с новой строки:\nНарежьте мясо\nОбжарьте лук\nДобавьте рис",
-    stepsHint: "Каждый шаг на отдельной строке — нумерация автоматическая",
-    cancel: "Отмена",
-    submit: "✓ Опубликовать рецепт",
-    saving: "Сохраняется...",
-    success: "Рецепт успешно добавлен! 🎉",
-    videoSize: "Видео должно быть не более 15МБ!"
-  },
-  en: {
-    eyebrow: "New Recipe",
-    title: "Share your dish <em style='font-style:italic;color:var(--saffron);'>with the world</em>",
-    subtitle: "Add your recipe in a few steps — thousands will be inspired",
-    back: "Back",
-    step1: "Dish photo",
-    step2: "Dish video (optional, max 15MB)",
-    step3: "Dish name",
-    step4: "Which country's cuisine?",
-    step5: "Required ingredients",
-    step6: "Preparation steps",
-    imgText: "Click or drag photo here",
-    imgHint: "JPG or PNG — max 5MB",
-    vidText: "Click or drag video here",
-    vidHint: "MP4, MOV — max 15MB",
-    titlePlaceholder: "E.g.: Uzbek Plov",
-    ingPlaceholder: "Each ingredient on a new line:\n1 kg beef\n2 onions\n500g rice",
-    ingHint: "Each ingredient on a separate line",
-    stepsPlaceholder: "Each step on a new line:\nChop the meat\nFry the onions\nAdd rice",
-    stepsHint: "Each step on a separate line — numbered automatically",
-    cancel: "Cancel",
-    submit: "✓ Publish Recipe",
-    saving: "Saving...",
-    success: "Recipe added successfully! 🎉",
-    videoSize: "Video must be under 15MB!"
-  }
-};
-
-function setLang(lang, btn) {
-  currentLang = lang;
-  localStorage.setItem("lang", lang);
-  document.querySelectorAll(".lang-btn-ar").forEach(b => {
-    b.style.background = "none";
-    b.style.color = "var(--ink)";
-  });
-  btn.style.background = "var(--tomato)";
-  btn.style.color = "white";
-  applyLang();
-}
-
-function applyLang() {
-  const t = T[currentLang];
-  setText("eyebrow", t.eyebrow);
-  document.getElementById("pageTitle").innerHTML = t.title;
-  setText("pageSubtitle", t.subtitle);
-  setText("backText", t.back);
-  setText("step1Label", t.step1);
-  setText("step2Label", t.step2);
-  setText("step3Label", t.step3);
-  setText("step4Label", t.step4);
-  setText("step5Label", t.step5);
-  setText("step6Label", t.step6);
-  setText("imgDropText", t.imgText);
-  setText("imgDropHint", t.imgHint);
-  setText("vidDropText", t.vidText);
-  setText("vidDropHint", t.vidHint);
-  document.getElementById("title").placeholder = t.titlePlaceholder;
-  document.getElementById("ingredients").placeholder = t.ingPlaceholder;
-  setText("ingHint", t.ingHint);
-  document.getElementById("steps").placeholder = t.stepsPlaceholder;
-  setText("stepsHint", t.stepsHint);
-  setText("cancelBtn", t.cancel);
-  setText("submitBtn", t.submit);
-}
-
-function setText(id, text) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = text;
-}
-
-// Sahifa yuklanganda til qo'llash
-applyLang();
-
-// Lang tugmalarini to'g'ri active qilish
-document.querySelectorAll(".lang-btn-ar").forEach(function(btn) {
-  btn.style.background = "none";
-  btn.style.color = "var(--ink)";
-  if (btn.getAttribute("onclick") && btn.getAttribute("onclick").includes("'" + currentLang + "'")) {
-    btn.style.background = "var(--tomato)";
-    btn.style.color = "white";
-  }
-});
-
-function previewVideo(input) {
-  const t = T[currentLang];
-  const file = input.files[0];
-  if (!file) return;
-  if (file.size > 15 * 1024 * 1024) {
-    showToast(t.videoSize);
-    return;
-  }
-  selectedVideo = file;
-  const url = URL.createObjectURL(file);
-  document.getElementById("previewVideo").src = url;
-  document.getElementById("videoPreview").style.display = "block";
-  document.getElementById("videoPlaceholder").style.display = "none";
-  document.getElementById("videoUploadArea").classList.add("has-image");
-}
+let selectedFile = null;
 let selectedCountry = "uz";
 
 const COUNTRIES = [
@@ -478,38 +303,24 @@ function previewImage(input) {
 
 async function addRecipe(e) {
   e.preventDefault();
-  const t = T[currentLang];
   const btn = document.getElementById("submitBtn");
   btn.disabled = true;
-  btn.textContent = t.saving;
+  btn.textContent = "Saqlanmoqda...";
 
   const { data: { user } } = await sb.auth.getUser();
   if (!user) { window.location.href = "login.html"; return; }
 
   let imageUrl = null;
-  let videoUrl = null;
 
   if (selectedFile) {
     const fileExt = selectedFile.name.split(".").pop();
     const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-    const { error: uploadError } = await sb.storage.from("RECIPE-IMAGE").upload(fileName, selectedFile);
+    const { error: uploadError } = await sb.storage.from("recipe-images").upload(fileName, selectedFile);
     if (!uploadError) {
-      const { data: urlData } = sb.storage.from("RECIPE-IMAGE").getPublicUrl(fileName);
+      const { data: urlData } = sb.storage.from("recipe-images").getPublicUrl(fileName);
       imageUrl = urlData.publicUrl;
     } else {
       showToast("Rasm yuklashda xato: " + uploadError.message);
-    }
-  }
-
-  if (selectedVideo) {
-    const fileExt = selectedVideo.name.split(".").pop();
-    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-    const { error: uploadError } = await sb.storage.from("videos").upload(fileName, selectedVideo);
-    if (!uploadError) {
-      const { data: urlData } = sb.storage.from("videos").getPublicUrl(fileName);
-      videoUrl = urlData.publicUrl;
-    } else {
-      showToast("Video yuklashda xato: " + uploadError.message);
     }
   }
 
@@ -520,20 +331,18 @@ async function addRecipe(e) {
     ingredients: document.getElementById("ingredients").value,
     steps: document.getElementById("steps").value,
     image_url: imageUrl,
-    video_url: videoUrl,
     rating_sum: 0,
     rating_count: 0
   };
 
   const { error } = await sb.from("recipes").insert(recipe);
-  const t2 = T[currentLang];
 
   if (error) {
-    showToast("Xato: " + error.message);
+    showToast("Xato yuz berdi: " + error.message);
     btn.disabled = false;
-    btn.textContent = t2.submit;
+    btn.textContent = "✓ Retseptni nashr qilish";
   } else {
-    showToast(t2.success);
+    showToast("Retsept muvaffaqiyatli qo'shildi! 🎉");
     setTimeout(() => window.location.href = "index.html", 1500);
   }
 }
