@@ -25,7 +25,9 @@
   document.addEventListener("DOMContentLoaded", init);
 
   function init() {
+    // Loader har qanday holatda 2 soniyadan keyin yashirilsin
     setTimeout(hideLoader, 700);
+    setTimeout(hideLoader, 2000);
 
     bindNav();
     bindSearch();
@@ -35,17 +37,23 @@
 
     initAuth().then(function () {
       loadDbRecipes().then(function () {
+        hideLoader();
         renderPicks();
         renderAllRecipes();
         applyLanguage(currentLang);
 
-        // Agar URL'da ?recipe=ID bo'lsa, o'sha retseptni avtomatik ochamiz
         var params = new URLSearchParams(window.location.search);
         var recipeParam = params.get("recipe");
         if (recipeParam) {
           openDetail("db-" + recipeParam);
         }
+      }).catch(function(e) {
+        hideLoader();
+        console.error("loadDbRecipes xato:", e);
       });
+    }).catch(function(e) {
+      hideLoader();
+      console.error("initAuth xato:", e);
     });
   }
 
