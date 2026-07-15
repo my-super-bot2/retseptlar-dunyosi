@@ -70,7 +70,8 @@
   }
 
   function renderAuthLoggedIn() {
-    document.getElementById("addRecipeBtn").style.display = "inline-block";
+    var addBtn = document.getElementById("addRecipeBtn");
+    if (addBtn) addBtn.style.display = "inline-block";
 
     // Notification belgisini ko'rsatish
     var notifLink = document.getElementById("notifLink");
