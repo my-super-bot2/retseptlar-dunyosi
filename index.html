@@ -7,12 +7,6 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<script>
-  // Oddiy tekshiruv: Agar foydalanuvchi kirmagan bo'lsa (masalan, localStorage'da 'user' yo'q bo'lsa)
-  if (!localStorage.getItem('user_logged_in')) {
-    window.location.href = 'login.html'; // Uni login sahifasiga yuboradi
-  }
-</script>
 <!-- LOADER -->
 <div class="loader-overlay" id="loaderOverlay">
   <div class="loader-spinner"></div>
