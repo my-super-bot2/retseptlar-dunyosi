@@ -686,14 +686,15 @@
     var reviewForm = document.getElementById("reviewFormWrap");
 
     if (r.fromDB) {
-      ratingBlock.style.display = "";
-      reviewForm.style.display = "";
+      if (ratingBlock) ratingBlock.style.display = "";
+      if (reviewForm) reviewForm.style.display = "";
       renderDbStars(r);
       renderDbReviews(r);
     } else {
-      ratingBlock.style.display = "none";
-      reviewForm.style.display = "none";
-      document.getElementById("reviewsList").innerHTML = '<div class="no-reviews">' + (lang === "uz" ? "Bu retsept uchun fikrlar mavjud emas" : lang === "ru" ? "Отзывы недоступны для этого рецепта" : "Reviews unavailable for this recipe") + '</div>';
+      if (ratingBlock) ratingBlock.style.display = "none";
+      if (reviewForm) reviewForm.style.display = "none";
+      var rl = document.getElementById("reviewsList");
+      if (rl) rl.innerHTML = '<div class="no-reviews">' + (lang === "uz" ? "Bu retsept uchun fikrlar mavjud emas" : lang === "ru" ? "Отзывы недоступны для этого рецепта" : "Reviews unavailable for this recipe") + '</div>';
     }
 
     document.title = r.name[lang] + " — " + t.siteTitle;
