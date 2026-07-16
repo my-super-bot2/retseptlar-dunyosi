@@ -3,17 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Retseptlar Dunyosi — Dunyo oshxonasi bir qadamda</title>
+<title>Retseptlar Dunyosi</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<!-- LOADER -->
+
 <div class="loader-overlay" id="loaderOverlay">
   <div class="loader-spinner"></div>
   <div class="loader-text" id="loaderText">Yuklanmoqda...</div>
 </div>
 
-<!-- NAVBAR -->
 <nav class="navbar" id="navbar">
   <div class="logo">
     <span class="logo-mark">Retseptlar <span class="accent">Dunyosi</span></span>
@@ -24,51 +23,40 @@
       <button class="lang-btn" data-lang="ru">RU</button>
       <button class="lang-btn" data-lang="en">EN</button>
     </div>
-    <a href="notifications.html" id="notifLink" style="display:none; position:relative;">
-      <button style="width:38px;height:38px;border-radius:50%;border:1px solid rgba(42,24,16,0.16);background:var(--paper);font-size:1.1rem;display:flex;align-items:center;justify-content:center;cursor:pointer;">🔔</button>
-      <span id="notifBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--tomato);color:white;border-radius:50%;width:18px;height:18px;font-size:0.65rem;font-weight:700;display:flex;align-items:center;justify-content:center;"></span>
+    <a href="notifications.html" id="notifLink" style="display:none; position:relative; text-decoration:none;">
+      <button style="width:36px;height:36px;border-radius:50%;border:1px solid rgba(42,24,16,0.16);background:var(--paper);font-size:1rem;display:flex;align-items:center;justify-content:center;cursor:pointer;">🔔</button>
+      <span id="notifBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--tomato);color:white;border-radius:50%;width:18px;height:18px;font-size:0.65rem;font-weight:700;align-items:center;justify-content:center;"></span>
     </a>
-    <div id="authArea" style="display:flex; align-items:center; gap:10px;"></div>
+    <div id="authArea" style="display:flex;align-items:center;gap:10px;"></div>
   </div>
 </nav>
 
-<!-- MAIN VIEW (Hero + Listing) -->
 <main id="mainView">
-
-  <!-- HERO -->
   <section class="hero" id="heroSection">
-    <span class="hero-spice" style="top:14%; left:8%; animation-delay:0s;">🌶️</span>
-    <span class="hero-spice" style="top:22%; right:10%; animation-delay:3s;">🍋</span>
-    <span class="hero-spice" style="bottom:30%; left:14%; animation-delay:6s;">🌿</span>
-    <span class="hero-spice" style="bottom:20%; right:16%; animation-delay:9s;">🧄</span>
-    <span class="hero-spice" style="top:45%; left:50%; animation-delay:4.5s;">⭐</span>
+    <span class="hero-spice" style="top:14%;left:8%;animation-delay:0s;">🌶️</span>
+    <span class="hero-spice" style="top:22%;right:10%;animation-delay:3s;">🍋</span>
+    <span class="hero-spice" style="bottom:30%;left:14%;animation-delay:6s;">🌿</span>
+    <span class="hero-spice" style="bottom:20%;right:16%;animation-delay:9s;">🧄</span>
 
     <div class="container hero-content">
       <div class="hero-eyebrow" id="heroEyebrow">★ 9 mamlakat • Yuzlab retseptlar</div>
       <h1 class="hero-title" id="heroTitle">Dunyo oshxonasi <em>bir qadamda</em></h1>
       <p class="hero-subtitle" id="heroSubtitle">9 mamlakat, yuzlab ta'mlar — qaysi birini bugun pishirasiz?</p>
-
       <div style="margin-bottom:20px;">
         <a href="add-recipe.html" id="addRecipeBtn" style="display:none;">
-          <button class="lang-btn" style="background:var(--tomato);color:white;padding:10px 22px;border-radius:8px;font-weight:700;">+ Retsept qo'shish</button>
+          <button class="lang-btn" style="background:var(--tomato);color:white;padding:10px 22px;border-radius:8px;font-weight:700;" id="addRecipeBtnText">+ Retsept qo'shish</button>
         </a>
       </div>
-
       <div class="search-wrap">
         <div class="search-box">
           <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <input type="text" class="search-input" id="searchInput" placeholder="Taom nomini kiriting... (masalan: osh, pitsa, sushi)" autocomplete="off">
+          <input type="text" class="search-input" id="searchInput" placeholder="Taom nomini kiriting..." autocomplete="off">
           <div class="mini-spinner" id="miniSpinner"></div>
-          <button class="search-clear" id="searchClear" aria-label="Tozalash">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          </button>
-          <button class="search-go" id="searchGo" aria-label="Qidirish">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-          </button>
+          <button class="search-clear" id="searchClear"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+          <button class="search-go" id="searchGo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></button>
         </div>
         <div class="search-dropdown" id="searchDropdown"></div>
       </div>
-
       <div class="picks-section">
         <div class="picks-label" id="picksLabel">Kun taomlari</div>
         <div class="picks-grid" id="picksGrid"></div>
@@ -76,7 +64,6 @@
     </div>
   </section>
 
-  <!-- ALL RECIPES GRID -->
   <section class="section" id="allRecipesSection">
     <div class="container">
       <div class="section-head">
@@ -87,22 +74,18 @@
     </div>
   </section>
 
-  <!-- FOOTER -->
   <footer class="site-footer">
     <div class="footer-logo">Retseptlar Dunyosi</div>
     <div id="footerText">Dunyo taomlarini sevuvchilar uchun ishtiyoq bilan yaratildi.</div>
   </footer>
-
 </main>
 
-<!-- DETAIL VIEW -->
 <div class="detail-view" id="detailView">
   <div class="container">
     <a class="detail-back" id="backBtn" href="javascript:void(0)">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
       <span id="backBtnText">Orqaga</span>
     </a>
-
     <div class="detail-hero">
       <div class="detail-img-wrap">
         <img id="detailImg" src="" alt="">
@@ -115,7 +98,7 @@
         <div class="detail-info-eyebrow" id="detailEyebrow">Retsept</div>
         <h1 class="detail-title" id="detailTitle"></h1>
         <p class="detail-tagline" id="detailTagline"></p>
-
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0;" id="detailActions"></div>
         <div class="detail-stats">
           <div class="detail-stat">
             <span class="detail-stat-value" id="detailTime"></span>
@@ -130,15 +113,13 @@
             <span class="detail-stat-label" id="detailDifficultyLabel">Murakkablik</span>
           </div>
         </div>
-
-        <div class="rating-block">
+        <div class="rating-block" id="ratingBlock">
           <span class="rating-block-label" id="rateThisLabel">Ushbu taomni baholang</span>
           <div class="stars-row" id="starsRow"></div>
           <div class="vote-feedback" id="voteFeedback">Ovoz berildi! Rahmat 🎉</div>
         </div>
       </div>
     </div>
-
     <div class="detail-content">
       <div class="ingredients-col">
         <h3 class="content-block-title" id="ingredientsTitle">Kerakli masalliqlar</h3>
@@ -149,18 +130,13 @@
         <ol class="steps-list" id="stepsList"></ol>
       </div>
     </div>
-
     <div class="reviews-section">
       <h3 class="content-block-title" id="reviewsTitle">Fikrlar</h3>
       <div class="reviews-grid">
-        <div>
-          <div id="reviewsList"></div>
-        </div>
-        <div class="review-form">
-          <strong id="addReviewTitle" style="font-family:var(--font-display); font-size:1.05rem;">Fikr qoldiring</strong>
-          <input type="text" id="reviewName" placeholder="Ismingiz">
+        <div><div id="reviewsList"></div></div>
+        <div class="review-form" id="reviewFormWrap">
+          <strong id="addReviewTitle" style="font-family:var(--font-display);font-size:1.05rem;">Fikr qoldiring</strong>
           <textarea id="reviewText" placeholder="Fikringiz..."></textarea>
-          <div class="review-form-stars" id="reviewFormStars"></div>
           <button class="review-submit-btn" id="reviewSubmitBtn">Yuborish</button>
         </div>
       </div>
@@ -168,7 +144,6 @@
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

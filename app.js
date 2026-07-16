@@ -625,61 +625,120 @@
       return "<li><span>" + step + "</span></li>";
     }).join("");
 
-    // Like tugmasi (faqat DB retseptlar uchun)
-    var existLikeBtn = document.getElementById("likeBtn");
-    if (existLikeBtn) existLikeBtn.remove();
+    // Like va Obuna tugmalarini detailActions ga qo'shish
+    var actions = document.getElementById("detailActions");
+    if (actions) {
+      actions.innerHTML = "";
 
-    if (r.fromDB) {
-      var likeBtn = document.createElement("button");
-      likeBtn.id = "likeBtn";
-      likeBtn.style.cssText = "margin-top:10px; margin-right:10px; padding:10px 20px; border-radius:8px; font-weight:700; font-size:0.88rem; cursor:pointer; border:2px solid rgba(42,24,16,0.16); background:transparent; color:var(--ink); display:inline-flex; align-items:center; gap:8px;";
-      likeBtn.innerHTML = "🤍 " + (r.likes_count || 0);
+      // Like tugmasi
+      if (r.fromDB) {
+        var likeBtn = document.createElement("button");
+        likeBtn.id = "likeBtn";
+        likeBtn.style.cssText = "padding:10px 20px;border-radius:8px;font-weight:700;font-size:0.88rem;cursor:pointer;border:2px solid rgba(42,24,16,0.16);background:transparent;color:var(--ink);display:inline-flex;align-items:center;gap:8px;";
+        var likeCount = r.likes_count || 0;
+        likeBtn.innerHTML = "🤍 " + likeCount;
 
-      if (currentUser) {
-        sb.from("likes").select("id").eq("recipe_id", r.dbId).eq("user_id", currentUser.id).single().then(function(res) {
-          if (res.data) {
-            likeBtn.innerHTML = "❤️ " + (r.likes_count || 0);
-            likeBtn.style.borderColor = "var(--tomato)";
-            likeBtn.style.color = "var(--tomato)";
-          }
-        });
-      }
-
-      var likeCount = r.likes_count || 0;
-      likeBtn.onclick = function() {
-        if (!currentUser) { window.location.href = "login.html"; return; }
-        sb.from("likes").select("id").eq("recipe_id", r.dbId).eq("user_id", currentUser.id).single().then(function(res) {
-          if (res.data) {
-            sb.from("likes").delete().eq("recipe_id", r.dbId).eq("user_id", currentUser.id).then(function() {
-              likeCount = Math.max(0, likeCount - 1);
-              r.likes_count = likeCount;
-              sb.from("recipes").update({ likes_count: likeCount }).eq("id", r.dbId).then(function(){});
-              likeBtn.innerHTML = "🤍 " + likeCount;
-              likeBtn.style.borderColor = "rgba(42,24,16,0.16)";
-              likeBtn.style.color = "var(--ink)";
-            });
-          } else {
-            sb.from("likes").insert({ recipe_id: r.dbId, user_id: currentUser.id }).then(function() {
-              likeCount = likeCount + 1;
-              r.likes_count = likeCount;
-              sb.from("recipes").update({ likes_count: likeCount }).eq("id", r.dbId).then(function(){});
+        if (currentUser) {
+          sb.from("likes").select("id").eq("recipe_id", r.dbId).eq("user_id", currentUser.id).single().then(function(res) {
+            if (res.data) {
               likeBtn.innerHTML = "❤️ " + likeCount;
               likeBtn.style.borderColor = "var(--tomato)";
               likeBtn.style.color = "var(--tomato)";
-              if (r.userId !== currentUser.id) {
-                sb.from("notifications").insert({
-                  user_id: r.userId,
-                  from_user_id: currentUser.id,
-                  type: "like",
-                  recipe_id: r.dbId
-                }).then(function(){});
-              }
-            });
+            }
+          });
+        }
+
+        likeBtn.onclick = function() {
+          if (!currentUser) { window.location.href = "login.html"; return; }
+          sb.from("likes").select("id").eq("recipe_id", r.dbId).eq("user_id", currentUser.id).single().then(function(res) {
+            if (res.data) {
+              sb.from("likes").delete().eq("recipe_id", r.dbId).eq("user_id", currentUser.id).then(function() {
+                likeCount = Math.max(0, likeCount - 1);
+                r.likes_count = likeCount;
+                sb.from("recipes").update({ likes_count: likeCount }).eq("id", r.dbId).then(function(){});
+                likeBtn.innerHTML = "🤍 " + likeCount;
+                likeBtn.style.borderColor = "rgba(42,24,16,0.16)";
+                likeBtn.style.color = "var(--ink)";
+              });
+            } else {
+              sb.from("likes").insert({ recipe_id: r.dbId, user_id: currentUser.id }).then(function() {
+                likeCount = likeCount + 1;
+                r.likes_count = likeCount;
+                sb.from("recipes").update({ likes_count: likeCount }).eq("id", r.dbId).then(function(){});
+                likeBtn.innerHTML = "❤️ " + likeCount;
+                likeBtn.style.borderColor = "var(--tomato)";
+                likeBtn.style.color = "var(--tomato)";
+                if (r.userId !== currentUser.id) {
+                  sb.from("notifications").insert({ user_id: r.userId, from_user_id: currentUser.id, type: "like", recipe_id: r.dbId }).then(function(){});
+                }
+              });
+            }
+          });
+        };
+        actions.appendChild(likeBtn);
+      }
+
+      // Obuna tugmasi
+      if (r.fromDB && currentUser && r.userId !== currentUser.id) {
+        var followBtn = document.createElement("button");
+        followBtn.id = "followBtn";
+        var followText = { uz: "➕ Kuzatish", ru: "➕ Подписаться", en: "➕ Follow" };
+        var followingText = { uz: "✓ Kuzatilmoqda", ru: "✓ Подписан", en: "✓ Following" };
+        followBtn.style.cssText = "padding:10px 22px;border-radius:8px;font-weight:700;font-size:0.88rem;cursor:pointer;border:2px solid var(--saffron);background:transparent;color:var(--ink);";
+        followBtn.innerHTML = followText[lang];
+
+        sb.from("follows").select("id").eq("follower_id", currentUser.id).eq("following_id", r.userId).single().then(function(res) {
+          if (res.data) {
+            followBtn.innerHTML = followingText[lang];
+            followBtn.style.background = "var(--saffron)";
+            followBtn.style.color = "white";
           }
         });
-      };
 
-      document.getElementById("detailTagline").parentElement.insertBefore(likeBtn, document.getElementById("detailTagline").nextSibling);
+        followBtn.onclick = function() {
+          sb.from("follows").select("id").eq("follower_id", currentUser.id).eq("following_id", r.userId).single().then(function(res) {
+            if (res.data) {
+              sb.from("follows").delete().eq("follower_id", currentUser.id).eq("following_id", r.userId).then(function() {
+                followBtn.innerHTML = followText[lang];
+                followBtn.style.background = "transparent";
+                followBtn.style.color = "var(--ink)";
+                showToast(lang === "uz" ? "Obuna bekor qilindi" : lang === "ru" ? "Подписка отменена" : "Unfollowed");
+              });
+            } else {
+              sb.from("follows").insert({ follower_id: currentUser.id, following_id: r.userId }).then(function() {
+                followBtn.innerHTML = followingText[lang];
+                followBtn.style.background = "var(--saffron)";
+                followBtn.style.color = "white";
+                showToast(lang === "uz" ? "Obuna bo'ldingiz! 🎉" : lang === "ru" ? "Вы подписались! 🎉" : "Following! 🎉");
+                sb.from("notifications").insert({ user_id: r.userId, from_user_id: currentUser.id, type: "follow", recipe_id: null }).then(function(){});
+              });
+            }
+          });
+        };
+        actions.appendChild(followBtn);
+      }
+
+      // Video tugmasi
+      if (r.fromDB && r.video_url) {
+        var videoBtn = document.createElement("button");
+        videoBtn.id = "detailVideoBtn";
+        videoBtn.innerHTML = "🎬 " + (lang === "uz" ? "Videoni ko'rish" : lang === "ru" ? "Смотреть видео" : "Watch video");
+        videoBtn.style.cssText = "padding:10px 20px;border-radius:8px;font-weight:700;font-size:0.88rem;cursor:pointer;border:2px solid rgba(42,24,16,0.16);background:transparent;color:var(--ink);";
+        var videoUrl = r.video_url;
+        videoBtn.onclick = function() {
+          var existVid = document.getElementById("detailVideo");
+          if (existVid) { existVid.remove(); videoBtn.innerHTML = "🎬 " + (lang === "uz" ? "Videoni ko'rish" : lang === "ru" ? "Смотреть видео" : "Watch video"); return; }
+          var vid = document.createElement("video");
+          vid.id = "detailVideo";
+          vid.src = videoUrl;
+          vid.controls = true;
+          vid.autoplay = true;
+          vid.style.cssText = "width:100%;max-height:500px;border-radius:8px;margin-top:12px;background:#000;display:block;";
+          document.getElementById("detailImg").parentElement.appendChild(vid);
+          videoBtn.innerHTML = "✕ " + (lang === "uz" ? "Yopish" : lang === "ru" ? "Закрыть" : "Close");
+        };
+        actions.appendChild(videoBtn);
+      }
     }
 
     var ratingBlock = document.getElementById("ratingBlock");
@@ -694,7 +753,7 @@
       if (ratingBlock) ratingBlock.style.display = "none";
       if (reviewForm) reviewForm.style.display = "none";
       var rl = document.getElementById("reviewsList");
-      if (rl) rl.innerHTML = '<div class="no-reviews">' + (lang === "uz" ? "Bu retsept uchun fikrlar mavjud emas" : lang === "ru" ? "Отзывы недоступны для этого рецепта" : "Reviews unavailable for this recipe") + '</div>';
+      if (rl) rl.innerHTML = '<div class="no-reviews">' + (lang === "uz" ? "Bu retsept uchun fikrlar mavjud emas" : lang === "ru" ? "Отзывы недоступны" : "No reviews available") + '</div>';
     }
 
     document.title = r.name[lang] + " — " + t.siteTitle;
