@@ -530,36 +530,6 @@
     document.getElementById("detailImg").src = r.image;
     document.getElementById("detailImg").alt = r.name[lang];
 
-    // Video tugmasi (faqat DB retseptlar uchun)
-    var existingVideo = document.getElementById("detailVideo");
-    var existingVideoBtn = document.getElementById("detailVideoBtn");
-    if (existingVideo) existingVideo.remove();
-    if (existingVideoBtn) existingVideoBtn.remove();
-
-    if (r.fromDB && r.video_url) {
-      var videoBtn = document.createElement("button");
-      videoBtn.id = "detailVideoBtn";
-      videoBtn.innerHTML = "🎬 Videoni ko'rish";
-      videoBtn.style.cssText = "margin-top:14px; padding:12px 24px; background:var(--tomato); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.95rem; cursor:pointer; display:block; width:100%;";
-      var videoUrl = r.video_url;
-      videoBtn.onclick = function() {
-        var existVid = document.getElementById("detailVideo");
-        if (existVid) {
-          existVid.remove();
-          videoBtn.innerHTML = "🎬 Videoni ko'rish";
-          return;
-        }
-        var vid = document.createElement("video");
-        vid.id = "detailVideo";
-        vid.src = videoUrl;
-        vid.controls = true;
-        vid.autoplay = true;
-        vid.style.cssText = "width:100%; max-height:500px; border-radius:8px; margin-top:12px; background:#000; display:block;";
-        videoBtn.parentElement.insertBefore(vid, videoBtn.nextSibling);
-        videoBtn.innerHTML = "✕ Videoni yopish";
-      };
-      document.getElementById("detailImg").parentElement.appendChild(videoBtn);
-    }
     document.getElementById("detailFlagEmoji").textContent = r.flag;
 
     var countryLabel = r.fromAPI ? (r.country || "—") : (COUNTRY_NAMES[r.country] ? COUNTRY_NAMES[r.country][lang] : (COUNTRY_LABELS_UZ[r.country] || "—"));
@@ -570,52 +540,6 @@
     document.getElementById("detailTime").textContent = r.time != null ? r.time : "—";
     document.getElementById("detailServings").textContent = r.servings != null ? r.servings : "—";
     document.getElementById("detailDifficulty").textContent = r.difficulty[lang];
-
-    // Obuna tugmasi (faqat DB retseptlar uchun, o'z retsepti emas)
-    var existFollowBtn = document.getElementById("followBtn");
-    if (existFollowBtn) existFollowBtn.remove();
-
-    if (r.fromDB && currentUser && r.userId !== currentUser.id) {
-      var followBtn = document.createElement("button");
-      followBtn.id = "followBtn";
-      followBtn.style.cssText = "margin-top:14px; padding:10px 22px; border-radius:8px; font-weight:700; font-size:0.88rem; cursor:pointer; border:2px solid var(--saffron); background:transparent; color:var(--ink);";
-
-      var followText = { uz: "Kuzatish", ru: "Подписаться", en: "Follow" };
-      var followingText = { uz: "✓ Kuzatilmoqda", ru: "✓ Подписан", en: "✓ Following" };
-
-      sb.from("follows").select("id").eq("follower_id", currentUser.id).eq("following_id", r.userId).single().then(function(res) {
-        if (res.data) {
-          followBtn.innerHTML = followingText[lang];
-          followBtn.style.background = "var(--saffron)";
-          followBtn.style.color = "white";
-        } else {
-          followBtn.innerHTML = followText[lang];
-        }
-      });
-
-      followBtn.onclick = function() {
-        if (!currentUser) { window.location.href = "login.html"; return; }
-        sb.from("follows").select("id").eq("follower_id", currentUser.id).eq("following_id", r.userId).single().then(function(res) {
-          if (res.data) {
-            sb.from("follows").delete().eq("follower_id", currentUser.id).eq("following_id", r.userId).then(function() {
-              followBtn.innerHTML = followText[lang];
-              followBtn.style.background = "transparent";
-              followBtn.style.color = "var(--ink)";
-              showToast(lang === "uz" ? "Obuna bekor qilindi" : lang === "ru" ? "Подписка отменена" : "Unfollowed");
-            });
-          } else {
-            sb.from("follows").insert({ follower_id: currentUser.id, following_id: r.userId }).then(function() {
-              followBtn.innerHTML = followingText[lang];
-              followBtn.style.background = "var(--saffron)";
-              followBtn.style.color = "white";
-              showToast(lang === "uz" ? "Obuna bo'ldingiz! 🎉" : lang === "ru" ? "Вы подписались! 🎉" : "Following! 🎉");
-            });
-          }
-        });
-      };
-
-      document.getElementById("detailTagline").parentElement.insertBefore(followBtn, document.getElementById("detailTagline").nextSibling);
-    }
 
     document.getElementById("ingredientsList").innerHTML = r.ingredients[lang].map(function (ing) {
       return "<li>" + ing + "</li>";
